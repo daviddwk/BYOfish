@@ -84,6 +84,12 @@ fn main() {
 
     // main loop
     loop {
+        print_asset(&mut asset, 0);
+        println!("height:{} width:{}", asset.size.height, asset.size.width);
+        println!(
+            "x:{} y:{}",
+            asset.cursor_position.x, asset.cursor_position.y
+        );
         let cmd = handle_blocking_input();
         if let Some(mv) = cmd.move_cursor {
             move_cursor(&mut asset, &mv);
@@ -94,7 +100,6 @@ fn main() {
         if let Some(rz) = cmd.resize {
             resize(&mut asset, &rz.0, rz.1);
         }
-        print_asset(&mut asset, 0);
     }
     // return terminal to regular state
     stdout()
@@ -229,7 +234,7 @@ fn move_cursor(asset: &mut Asset, direction: &Direction) {
             }
         }
         Direction::Down => {
-            if asset.cursor_position.x < asset.size.width - 1 {
+            if asset.cursor_position.x < asset.size.height - 1 {
                 asset.cursor_position.x += 1;
             }
         }
@@ -241,16 +246,35 @@ fn resize(asset: &mut Asset, direction: &Direction, delta: i32) {
     let grow = delta.is_positive();
 
     for _i in 0..delta_abs {
+        // change the size
+        // size should just be a function shouldn't it
+        if *direction == Direction::Up || *direction == Direction::Down {
+            if grow {
+                asset.size.height += 1;
+            } else {
+                asset.size.height -= 1;
+            }
+        } else {
+            // else must be left or right
+            if grow {
+                asset.size.width += 1;
+            } else {
+                asset.size.width -= 1;
+            }
+        }
+        // this could be inverted and it might be better
         for frame_idx in 0..asset.animation.len() {
             if *direction == Direction::Up {
                 if grow {
-                    asset.animation[frame_idx].insert(0, vec![]);
+                    let line_len = asset.animation[frame_idx][0].len();
+                    asset.animation[frame_idx].insert(0, vec![EMPTY_COLOR_GLYPH; line_len]);
                 } else {
                     asset.animation[frame_idx].remove(0);
                 }
             } else if *direction == Direction::Down {
                 if grow {
-                    asset.animation[frame_idx].push(vec![]);
+                    let line_len = asset.animation[frame_idx][0].len();
+                    asset.animation[frame_idx].push(vec![EMPTY_COLOR_GLYPH; line_len]);
                 } else {
                     asset.animation[frame_idx].pop();
                 }
