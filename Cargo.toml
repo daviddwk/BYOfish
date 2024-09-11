@@ -1,5 +1,5 @@
 [package]
-name = "freefish"
+name = "byofish"
 version = "0.0.1"
 include = ["*.rs"]
 

@@ -38,6 +38,7 @@ struct Asset {
     cursor_position: Position,
 }
 
+#[derive(PartialEq)]
 enum Direction {
     Left,
     Right,
@@ -61,12 +62,12 @@ fn main() {
     let args = Opt::from_args();
     let mut asset: Asset = Asset {
         animation: blank_animation(Size {
-            height: 10,
-            width: 10,
+            height: 3,
+            width: 3,
         }),
         size: Size {
-            height: 10,
-            width: 10,
+            height: 3,
+            width: 3,
         },
         cursor_position: Position { x: 0, y: 0 },
     };
@@ -83,14 +84,17 @@ fn main() {
 
     // main loop
     loop {
-        print_asset(&mut asset, 0);
         let cmd = handle_blocking_input();
-        if cmd.move_cursor.is_some() {
-            move_cursor(&mut asset, &cmd.move_cursor.unwrap());
+        if let Some(mv) = cmd.move_cursor {
+            move_cursor(&mut asset, &mv);
         }
         if cmd.quit {
             break;
         }
+        if let Some(rz) = cmd.resize {
+            resize(&mut asset, &rz.0, rz.1);
+        }
+        print_asset(&mut asset, 0);
     }
     // return terminal to regular state
     stdout()
@@ -177,6 +181,31 @@ fn handle_blocking_input() -> Command {
             state: KeyEventState::NONE,
         }) => command.move_cursor = Some(Direction::Down),
 
+        Event::Key(KeyEvent {
+            code: KeyCode::Left,
+            modifiers: KeyModifiers::CONTROL,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => command.resize = Some((Direction::Left, 1)),
+        Event::Key(KeyEvent {
+            code: KeyCode::Right,
+            modifiers: KeyModifiers::CONTROL,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => command.resize = Some((Direction::Right, 1)),
+        Event::Key(KeyEvent {
+            code: KeyCode::Up,
+            modifiers: KeyModifiers::CONTROL,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => command.resize = Some((Direction::Up, 1)),
+        Event::Key(KeyEvent {
+            code: KeyCode::Down,
+            modifiers: KeyModifiers::CONTROL,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => command.resize = Some((Direction::Down, 1)),
+
         _ => (),
     };
     return command;
@@ -185,22 +214,22 @@ fn handle_blocking_input() -> Command {
 fn move_cursor(asset: &mut Asset, direction: &Direction) {
     match direction {
         Direction::Left => {
-            if asset.cursor_position.y > 1 {
+            if asset.cursor_position.y >= 1 {
                 asset.cursor_position.y -= 1;
             }
         }
         Direction::Right => {
-            if asset.cursor_position.y < asset.size.width {
+            if asset.cursor_position.y < asset.size.width - 1 {
                 asset.cursor_position.y += 1;
             }
         }
         Direction::Up => {
-            if asset.cursor_position.x > 1 {
+            if asset.cursor_position.x >= 1 {
                 asset.cursor_position.x -= 1;
             }
         }
         Direction::Down => {
-            if asset.cursor_position.x < asset.size.width {
+            if asset.cursor_position.x < asset.size.width - 1 {
                 asset.cursor_position.x += 1;
             }
         }
@@ -208,39 +237,39 @@ fn move_cursor(asset: &mut Asset, direction: &Direction) {
 }
 
 fn resize(asset: &mut Asset, direction: &Direction, delta: i32) {
-    if delta > 0 {
-        match direction {
-            Direction::Left => {
-                for frame_idx in 0..asset.animation.len() {
-                    for line_idx in 0..asset.animation[frame_idx].len() {
-                        asset.animation[frame_idx][line_idx].insert(0, EMPTY_COLOR_GLYPH);
-                    }
-                }
-            }
-            Direction::Right => {
-                for frame_idx in 0..asset.animation.len() {
-                    for line_idx in 0..asset.animation[frame_idx].len() {
-                        asset.animation[frame_idx][line_idx].push(EMPTY_COLOR_GLYPH);
-                    }
-                }
-            }
-            Direction::Up => {
-                for frame_idx in 0..asset.animation.len() {
+    let delta_abs = delta.abs();
+    let grow = delta.is_positive();
+
+    for _i in 0..delta_abs {
+        for frame_idx in 0..asset.animation.len() {
+            if *direction == Direction::Up {
+                if grow {
                     asset.animation[frame_idx].insert(0, vec![]);
-                    for _line_idx in 0..asset.animation[frame_idx][1].len() {
-                        asset.animation[frame_idx][0].push(EMPTY_COLOR_GLYPH);
-                    }
+                } else {
+                    asset.animation[frame_idx].remove(0);
+                }
+            } else if *direction == Direction::Down {
+                if grow {
+                    asset.animation[frame_idx].push(vec![]);
+                } else {
+                    asset.animation[frame_idx].pop();
                 }
             }
-            Direction::Down => {
-                for frame_idx in 0..asset.animation.len() {
-                    asset.animation[frame_idx].push(vec![]);
-                    for _line_idx in 0..asset.animation[frame_idx][1].len() {
-                        asset.animation[frame_idx][0].push(EMPTY_COLOR_GLYPH);
+            for line_idx in 0..asset.animation[frame_idx].len() {
+                if *direction == Direction::Left {
+                    if grow {
+                        asset.animation[frame_idx][line_idx].insert(0, EMPTY_COLOR_GLYPH);
+                    } else {
+                        asset.animation[frame_idx][line_idx].remove(0);
+                    }
+                } else if *direction == Direction::Right {
+                    if grow {
+                        asset.animation[frame_idx][line_idx].push(EMPTY_COLOR_GLYPH);
+                    } else {
+                        asset.animation[frame_idx][line_idx].pop();
                     }
                 }
             }
         }
-    } else if delta < 0 {
     }
 }
