@@ -103,7 +103,10 @@ fn main() {
             resize(&mut asset, &rz.0, rz.1);
         }
         if let Some(glyph) = cmd.set_char {
-            set_char(&mut asset, glyph)
+            set_char(&mut asset, glyph);
+        }
+        if let Some(color) = cmd.set_color {
+            set_color(&mut asset, color);
         }
     }
     // return terminal to regular state
@@ -191,6 +194,7 @@ fn handle_blocking_input() -> Command {
             state: KeyEventState::NONE,
         }) => command.move_cursor = Some(Direction::Down),
         // grow
+        // TODO make a grow / shrink mode for this and for adding / removing frames
         Event::Key(KeyEvent {
             code: KeyCode::Left,
             modifiers: KeyModifiers::CONTROL,
@@ -254,6 +258,32 @@ fn handle_blocking_input() -> Command {
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => command.set_char = Some('b'),
+        // set color
+        // todo make switch between mode for colors
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('a'),
+            modifiers: KeyModifiers::CONTROL,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => command.set_color = Some(Color::DarkGrey),
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('A'),
+            modifiers: KeyModifiers::CONTROL,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => command.set_color = Some(Color::Black),
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('r'),
+            modifiers: KeyModifiers::CONTROL,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => command.set_color = Some(Color::Red),
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('R'),
+            modifiers: KeyModifiers::CONTROL,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => command.set_color = Some(Color::DarkRed),
 
         _ => (),
     };
@@ -286,6 +316,7 @@ fn move_cursor(asset: &mut Asset, direction: &Direction) {
 }
 
 // TODO move cursor appropriately
+// TODO don't let it shrink into nothing
 fn resize(asset: &mut Asset, direction: &Direction, delta: i32) {
     let delta_abs = delta.abs();
     let grow = delta.is_positive();
@@ -349,5 +380,14 @@ fn set_char(asset: &mut Asset, glyph: char) {
     let glyph_idx = asset.cursor_position.x;
     let mut color_glyph = asset.animation[frame_idx][line_idx][glyph_idx];
     color_glyph.glyph = glyph;
+    asset.animation[frame_idx][line_idx][glyph_idx] = color_glyph;
+}
+
+fn set_color(asset: &mut Asset, color: Color) {
+    let frame_idx = asset.current_frame;
+    let line_idx = asset.cursor_position.y;
+    let glyph_idx = asset.cursor_position.x;
+    let mut color_glyph = asset.animation[frame_idx][line_idx][glyph_idx];
+    color_glyph.foreground_color = Some(color);
     asset.animation[frame_idx][line_idx][glyph_idx] = color_glyph;
 }
