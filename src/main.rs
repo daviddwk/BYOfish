@@ -51,7 +51,7 @@ struct Command {
     quit: bool,
     move_cursor: Option<Direction>,
     resize: Option<(Direction, i32)>,
-    cycle_frame: Option<i32>,
+    cycle_frame: Option<isize>,
     set_char: Option<char>,
     set_color: Option<Color>,
     add_frame: bool,
@@ -86,8 +86,11 @@ fn main() {
 
     // main loop
     loop {
-        print_asset(&mut asset, 0);
-        println!("height:{} width:{}", asset.size.height, asset.size.width);
+        print_asset(&mut asset);
+        println!(
+            "frame: {}, height:{} width:{}",
+            asset.current_frame, asset.size.height, asset.size.width
+        );
         println!(
             "x:{} y:{}",
             asset.cursor_position.x, asset.cursor_position.y
@@ -108,6 +111,15 @@ fn main() {
         if let Some(color) = cmd.set_color {
             set_color(&mut asset, color);
         }
+        if cmd.add_frame {
+            add_frame(&mut asset);
+        }
+        if cmd.delete_frame {
+            delete_frame(&mut asset);
+        }
+        if let Some(delta) = cmd.cycle_frame {
+            cycle_frame(&mut asset, delta);
+        }
     }
     // return terminal to regular state
     stdout()
@@ -118,8 +130,9 @@ fn main() {
     exit(0);
 }
 
-fn print_asset(asset: &mut Asset, frame_idx: usize) {
+fn print_asset(asset: &mut Asset) {
     stdout().execute(MoveTo(0, 0)).unwrap();
+    let frame_idx = asset.current_frame;
     for line_idx in 0..asset.animation[frame_idx].len() {
         for glyph_idx in 0..asset.animation[frame_idx][line_idx].len() {
             let pos = Position {
@@ -285,6 +298,31 @@ fn handle_blocking_input() -> Command {
             state: KeyEventState::NONE,
         }) => command.set_color = Some(Color::DarkRed),
 
+        Event::Key(KeyEvent {
+            code: KeyCode::Insert,
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => command.add_frame = true,
+        Event::Key(KeyEvent {
+            code: KeyCode::Delete,
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => command.delete_frame = true,
+        Event::Key(KeyEvent {
+            code: KeyCode::PageUp,
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => command.cycle_frame = Some(1),
+        Event::Key(KeyEvent {
+            code: KeyCode::PageDown,
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => command.cycle_frame = Some(-1),
+
         _ => (),
     };
     return command;
@@ -390,4 +428,31 @@ fn set_color(asset: &mut Asset, color: Color) {
     let mut color_glyph = asset.animation[frame_idx][line_idx][glyph_idx];
     color_glyph.foreground_color = Some(color);
     asset.animation[frame_idx][line_idx][glyph_idx] = color_glyph;
+}
+
+fn cycle_frame(asset: &mut Asset, delta: isize) {
+    let new_frame_idx =
+        (asset.current_frame as isize + delta).rem_euclid(asset.animation.len() as isize);
+    println!("new_frame_idx: {}", new_frame_idx);
+    asset.current_frame = new_frame_idx as usize;
+}
+
+fn add_frame(asset: &mut Asset) {
+    asset.animation.insert(
+        asset.current_frame,
+        // TODO make get height and width functions
+        // because this is pretty dumb
+        blank_animation(Size {
+            height: asset.animation[0].len(),
+            width: asset.animation[0][0].len(),
+        })[0]
+            .clone(),
+    );
+}
+
+fn delete_frame(asset: &mut Asset) {
+    if !(asset.animation.len() <= 1) {
+        asset.animation.remove(asset.current_frame);
+        asset.current_frame = asset.current_frame % asset.animation[0].len();
+    }
 }
