@@ -36,6 +36,7 @@ struct Asset {
     animation: Animation,
     size: Size,
     cursor_position: Position,
+    current_frame: usize,
 }
 
 #[derive(PartialEq)]
@@ -70,6 +71,7 @@ fn main() {
             width: 3,
         },
         cursor_position: Position { x: 0, y: 0 },
+        current_frame: 0,
     };
 
     // init terminal
@@ -100,6 +102,9 @@ fn main() {
         if let Some(rz) = cmd.resize {
             resize(&mut asset, &rz.0, rz.1);
         }
+        if let Some(glyph) = cmd.set_char {
+            set_char(&mut asset, glyph)
+        }
     }
     // return terminal to regular state
     stdout()
@@ -115,8 +120,8 @@ fn print_asset(asset: &mut Asset, frame_idx: usize) {
     for line_idx in 0..asset.animation[frame_idx].len() {
         for glyph_idx in 0..asset.animation[frame_idx][line_idx].len() {
             let pos = Position {
-                x: line_idx,
-                y: glyph_idx,
+                x: glyph_idx,
+                y: line_idx,
             };
             if pos == asset.cursor_position {
                 ColorGlyph {
@@ -160,7 +165,7 @@ fn handle_blocking_input() -> Command {
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => command.quit = true,
-
+        // move
         Event::Key(KeyEvent {
             code: KeyCode::Left,
             modifiers: KeyModifiers::NONE,
@@ -185,7 +190,7 @@ fn handle_blocking_input() -> Command {
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => command.move_cursor = Some(Direction::Down),
-
+        // grow
         Event::Key(KeyEvent {
             code: KeyCode::Left,
             modifiers: KeyModifiers::CONTROL,
@@ -210,6 +215,45 @@ fn handle_blocking_input() -> Command {
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => command.resize = Some((Direction::Down, 1)),
+        //
+        Event::Key(KeyEvent {
+            code: KeyCode::Left,
+            modifiers: KeyModifiers::SHIFT,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => command.resize = Some((Direction::Left, -1)),
+        Event::Key(KeyEvent {
+            code: KeyCode::Right,
+            modifiers: KeyModifiers::SHIFT,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => command.resize = Some((Direction::Right, -1)),
+        Event::Key(KeyEvent {
+            code: KeyCode::Up,
+            modifiers: KeyModifiers::SHIFT,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => command.resize = Some((Direction::Up, -1)),
+        Event::Key(KeyEvent {
+            code: KeyCode::Down,
+            modifiers: KeyModifiers::SHIFT,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => command.resize = Some((Direction::Down, -1)),
+        // set char
+        // this could definitely be a macro maybe idk
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('a'),
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => command.set_char = Some('a'),
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('b'),
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => command.set_char = Some('b'),
 
         _ => (),
     };
@@ -219,28 +263,29 @@ fn handle_blocking_input() -> Command {
 fn move_cursor(asset: &mut Asset, direction: &Direction) {
     match direction {
         Direction::Left => {
-            if asset.cursor_position.y >= 1 {
-                asset.cursor_position.y -= 1;
-            }
-        }
-        Direction::Right => {
-            if asset.cursor_position.y < asset.size.width - 1 {
-                asset.cursor_position.y += 1;
-            }
-        }
-        Direction::Up => {
             if asset.cursor_position.x >= 1 {
                 asset.cursor_position.x -= 1;
             }
         }
-        Direction::Down => {
-            if asset.cursor_position.x < asset.size.height - 1 {
+        Direction::Right => {
+            if asset.cursor_position.x < asset.size.width - 1 {
                 asset.cursor_position.x += 1;
+            }
+        }
+        Direction::Up => {
+            if asset.cursor_position.y >= 1 {
+                asset.cursor_position.y -= 1;
+            }
+        }
+        Direction::Down => {
+            if asset.cursor_position.y < asset.size.height - 1 {
+                asset.cursor_position.y += 1;
             }
         }
     }
 }
 
+// TODO move cursor appropriately
 fn resize(asset: &mut Asset, direction: &Direction, delta: i32) {
     let delta_abs = delta.abs();
     let grow = delta.is_positive();
@@ -296,4 +341,13 @@ fn resize(asset: &mut Asset, direction: &Direction, delta: i32) {
             }
         }
     }
+}
+
+fn set_char(asset: &mut Asset, glyph: char) {
+    let frame_idx = asset.current_frame;
+    let line_idx = asset.cursor_position.y;
+    let glyph_idx = asset.cursor_position.x;
+    let mut color_glyph = asset.animation[frame_idx][line_idx][glyph_idx];
+    color_glyph.glyph = glyph;
+    asset.animation[frame_idx][line_idx][glyph_idx] = color_glyph;
 }

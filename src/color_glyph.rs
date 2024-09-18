@@ -4,7 +4,7 @@ use crossterm::{
 };
 use std::io::stdout;
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub struct ColorGlyph {
     pub glyph: char,
     pub foreground_color: Option<Color>,
