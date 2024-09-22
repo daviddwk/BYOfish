@@ -363,8 +363,6 @@ fn move_cursor(asset: &mut Asset, direction: &Direction) {
     }
 }
 
-// TODO move cursor appropriately
-// TODO don't let it shrink into nothing
 fn resize(asset: &mut Asset, direction: &Direction, delta: i32) {
     let delta_abs = delta.abs();
     let grow = delta.is_positive();
@@ -376,6 +374,10 @@ fn resize(asset: &mut Asset, direction: &Direction, delta: i32) {
             if grow {
                 asset.size.height += 1;
             } else {
+                // so it doesn't shrink to nothing
+                if asset.size.height <= 1 {
+                    break;
+                }
                 asset.size.height -= 1;
             }
         } else {
@@ -383,6 +385,10 @@ fn resize(asset: &mut Asset, direction: &Direction, delta: i32) {
             if grow {
                 asset.size.width += 1;
             } else {
+                // so it doesn't shrink to nothing
+                if asset.size.width <= 1 {
+                    break;
+                }
                 asset.size.width -= 1;
             }
         }
@@ -392,6 +398,10 @@ fn resize(asset: &mut Asset, direction: &Direction, delta: i32) {
                 if grow {
                     let line_len = asset.animation[frame_idx][0].len();
                     asset.animation[frame_idx].insert(0, vec![EMPTY_COLOR_GLYPH; line_len]);
+                    // cursor moves naturally with growth
+                    if frame_idx == 0 {
+                        asset.cursor_position.y += 1;
+                    }
                 } else {
                     asset.animation[frame_idx].remove(0);
                 }
@@ -407,6 +417,10 @@ fn resize(asset: &mut Asset, direction: &Direction, delta: i32) {
                 if *direction == Direction::Left {
                     if grow {
                         asset.animation[frame_idx][line_idx].insert(0, EMPTY_COLOR_GLYPH);
+                        // cursor moves naturally with growth
+                        if line_idx == 0 {
+                            asset.cursor_position.x += 1;
+                        }
                     } else {
                         asset.animation[frame_idx][line_idx].remove(0);
                     }
@@ -419,6 +433,12 @@ fn resize(asset: &mut Asset, direction: &Direction, delta: i32) {
                 }
             }
         }
+    }
+    if asset.cursor_position.x >= asset.animation[0][0].len() {
+        asset.cursor_position.x = asset.animation[0][0].len() - 1;
+    }
+    if asset.cursor_position.y >= asset.animation[0].len() {
+        asset.cursor_position.y = asset.animation[0].len() - 1;
     }
 }
 
