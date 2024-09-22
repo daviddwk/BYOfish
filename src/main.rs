@@ -1,6 +1,7 @@
 use std::io::stdout;
 use std::process::exit;
 extern crate structopt;
+use colored::Colorize;
 use structopt::StructOpt;
 
 extern crate crossterm;
@@ -143,12 +144,20 @@ fn main() {
 fn print_asset(asset: &mut Asset) {
     stdout().execute(MoveTo(0, 0)).unwrap();
     let frame_idx = asset.current_frame;
-    for line_idx in 0..asset.animation[frame_idx].len() {
-        for glyph_idx in 0..asset.animation[frame_idx][line_idx].len() {
+    for line_idx in 0..asset.size.height {
+        // print top line
+        if line_idx == 0 {
+            print!("┏{}┓\r\n", "━".repeat(asset.size.width));
+        }
+        for glyph_idx in 0..asset.size.width {
+            if glyph_idx == 0 {
+                print!("┃");
+            }
             let pos = Position {
                 x: glyph_idx,
                 y: line_idx,
             };
+            // TODO make cursor flashing
             if pos == asset.cursor_position {
                 ColorGlyph {
                     glyph: 'X',
@@ -159,8 +168,15 @@ fn print_asset(asset: &mut Asset) {
             } else {
                 asset.animation[frame_idx][line_idx][glyph_idx].print();
             }
+            if glyph_idx == asset.size.width - 1 {
+                print!("┃");
+            }
         }
         print!("\r\n");
+        // print bottom line
+        if line_idx == asset.size.height - 1 {
+            print!("┗{}┛\r\n", "━".repeat(asset.size.width));
+        }
     }
 }
 
