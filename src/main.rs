@@ -85,6 +85,16 @@ fn main() {
         .unwrap();
 
     // main loop
+    let mut cmd = Command {
+        quit: false,
+        move_cursor: None,
+        resize: None,
+        cycle_frame: None,
+        set_char: None,
+        set_color: None,
+        add_frame: false,
+        delete_frame: false,
+    };
     loop {
         print_asset(&mut asset);
         println!(
@@ -95,7 +105,7 @@ fn main() {
             "x:{} y:{}",
             asset.cursor_position.x, asset.cursor_position.y
         );
-        let cmd = handle_blocking_input();
+        cmd = handle_blocking_input();
         if let Some(mv) = cmd.move_cursor {
             move_cursor(&mut asset, &mv);
         }
