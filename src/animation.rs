@@ -16,11 +16,7 @@ pub struct Size {
     pub height: usize,
     pub width: usize,
 }
-#[derive(Clone)]
-pub struct PositionRange {
-    pub x: std::ops::RangeInclusive<usize>,
-    pub y: std::ops::RangeInclusive<usize>,
-}
+
 pub type Animation = Vec<Vec<Vec<ColorGlyph>>>;
 
 pub fn blank_animation(size: Size) -> Animation {

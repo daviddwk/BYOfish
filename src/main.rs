@@ -1,14 +1,11 @@
 use std::io::stdout;
 use std::process::exit;
 extern crate structopt;
-use colored::Colorize;
 use structopt::StructOpt;
 
 extern crate crossterm;
 use crossterm::{
-    cursor::{Hide, MoveTo, Show},
-    event::{poll, read, Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
-    style::Color,
+    cursor::{Hide, Show},
     terminal::{disable_raw_mode, enable_raw_mode, Clear},
     ExecutableCommand,
 };
@@ -18,16 +15,15 @@ extern crate rand;
 extern crate serde_json;
 
 mod animation;
-use animation::{blank_animation, Animation, Position, Size};
+use animation::{blank_animation, Position, Size};
 mod color_glyph;
-use color_glyph::{ColorGlyph, EMPTY_COLOR_GLYPH};
 mod error;
 use error::error;
 mod asset;
 mod open_json;
 use asset::Asset;
 mod commands;
-use commands::{Command, Direction};
+use commands::Command;
 mod input;
 use input::handle_blocking_input;
 
@@ -40,7 +36,7 @@ use input::handle_blocking_input;
 struct Opt {}
 
 fn main() {
-    let args = Opt::from_args();
+    let _args = Opt::from_args();
     let mut asset: Asset = Asset {
         animation: blank_animation(Size {
             height: 3,
@@ -76,7 +72,7 @@ fn main() {
         delete_frame: false,
     };
     loop {
-        print_asset(&mut asset);
+        asset.print();
         println!(
             "frame: {}, height:{} width:{}",
             asset.current_frame, asset.size.height, asset.size.width
@@ -87,28 +83,28 @@ fn main() {
         );
         cmd = handle_blocking_input();
         if let Some(mv) = cmd.move_cursor {
-            commands::move_cursor(&mut asset, &mv);
+            asset.move_cursor(&mv);
         }
         if cmd.quit {
             break;
         }
         if let Some(rz) = cmd.resize {
-            commands::resize(&mut asset, &rz.0, rz.1);
+            asset.resize(&rz.0, rz.1);
         }
         if let Some(glyph) = cmd.set_char {
-            commands::set_char(&mut asset, glyph);
+            asset.set_char(glyph);
         }
         if let Some(color) = cmd.set_color {
-            commands::set_color(&mut asset, color);
+            asset.set_color(color);
         }
         if cmd.add_frame {
-            commands::add_frame(&mut asset);
+            asset.add_frame();
         }
         if cmd.delete_frame {
-            commands::delete_frame(&mut asset);
+            asset.delete_frame();
         }
         if let Some(delta) = cmd.cycle_frame {
-            commands::cycle_frame(&mut asset, delta);
+            asset.cycle_frame(delta);
         }
     }
     // return terminal to regular state
@@ -118,43 +114,4 @@ fn main() {
     stdout().execute(Show).unwrap();
     disable_raw_mode().unwrap();
     exit(0);
-}
-
-fn print_asset(asset: &mut Asset) {
-    stdout().execute(MoveTo(0, 0)).unwrap();
-    let frame_idx = asset.current_frame;
-    for line_idx in 0..asset.size.height {
-        // print top line
-        if line_idx == 0 {
-            print!("┏{}┓ \r\n", "━".repeat(asset.size.width));
-        }
-        for glyph_idx in 0..asset.size.width {
-            if glyph_idx == 0 {
-                print!("┃");
-            }
-            let pos = Position {
-                x: glyph_idx,
-                y: line_idx,
-            };
-            // TODO make cursor flashing
-            if pos == asset.cursor_position {
-                ColorGlyph {
-                    glyph: 'X',
-                    foreground_color: None,
-                    background_color: None,
-                }
-                .print();
-            } else {
-                asset.animation[frame_idx][line_idx][glyph_idx].print();
-            }
-            if glyph_idx == asset.size.width - 1 {
-                print!("┃ ");
-            }
-        }
-        print!("\r\n");
-        // print bottom line
-        if line_idx == asset.size.height - 1 {
-            print!("┗{}┛ \r\n", "━".repeat(asset.size.width));
-        }
-    }
 }
