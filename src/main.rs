@@ -16,6 +16,8 @@ extern crate rand;
 extern crate serde_json;
 use home::home_dir;
 
+mod mode;
+use mode::EditorMode;
 mod animation;
 mod color_glyph;
 mod error;
@@ -38,6 +40,9 @@ struct Opt {}
 
 fn main() {
     let _args = Opt::from_args();
+
+    let mut mode = EditorMode::Glyph;
+
     let asset_path: PathBuf = home::home_dir().unwrap().join("Documents");
     let mut asset = Asset::new(&asset_path, "test");
     // init terminal
@@ -64,7 +69,19 @@ fn main() {
             asset.get_cursor_position().x,
             asset.get_cursor_position().y
         );
-        let cmd = handle_blocking_input();
+        if mode == EditorMode::Glyph {
+            println!("mode:glyph");
+        } else {
+            println!("mode:color");
+        }
+        let cmd = handle_blocking_input(&mode);
+        if cmd.cycle_mode {
+            if mode == EditorMode::Glyph {
+                mode = EditorMode::Color;
+            } else if mode == EditorMode::Color {
+                mode = EditorMode::Glyph;
+            }
+        }
         if let Some(mv) = cmd.move_cursor {
             asset.move_cursor(&mv);
         }

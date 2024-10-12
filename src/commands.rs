@@ -17,5 +17,6 @@ pub struct Command {
     pub set_color: Option<Color>,
     pub add_frame: bool,
     pub delete_frame: bool,
+    pub cycle_mode: bool,
     // play animation isize number times
 }

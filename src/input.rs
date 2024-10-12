@@ -7,8 +7,9 @@ use crossterm::{
 };
 
 use commands::{Command, Direction};
+use mode::EditorMode;
 
-pub fn handle_blocking_input() -> Command {
+pub fn handle_blocking_input(mode: &EditorMode) -> Command {
     let mut command = Command {
         quit: false,
         move_cursor: None,
@@ -18,15 +19,25 @@ pub fn handle_blocking_input() -> Command {
         set_color: None,
         add_frame: false,
         delete_frame: false,
+        cycle_mode: false,
     };
 
     // this blocks until somthing happens
     let event = crossterm::event::read().unwrap();
 
-    command.set_char = match_set_char(&event);
-    command.set_color = match_set_color(&event);
+    if *mode == EditorMode::Glyph {
+        command.set_char = match_set_char(&event);
+    } else if *mode == EditorMode::Color {
+        command.set_color = match_set_color(&event);
+    }
 
     match event {
+        Event::Key(KeyEvent {
+            code: KeyCode::Tab,
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => command.cycle_mode = true,
         //
         // EXIT
         //
