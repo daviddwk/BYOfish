@@ -30,3 +30,28 @@ impl ColorGlyph {
         print!("{}", self.glyph);
     }
 }
+
+pub fn color_to_char(color: &Option<Color>) -> char {
+    match color {
+        Some(Color::DarkGrey) => 'a',
+        Some(Color::Red) => 'r',
+        Some(Color::Green) => 'g',
+        Some(Color::Yellow) => 'y',
+        Some(Color::Blue) => 'b',
+        Some(Color::Magenta) => 'm',
+        Some(Color::Cyan) => 'c',
+        Some(Color::White) => 'w',
+
+        Some(Color::Black) => 'A',
+        Some(Color::DarkRed) => 'R',
+        Some(Color::DarkGreen) => 'G',
+        Some(Color::DarkYellow) => 'Y',
+        Some(Color::DarkBlue) => 'B',
+        Some(Color::DarkMagenta) => 'M',
+        Some(Color::DarkCyan) => 'C',
+        Some(Color::Grey) => 'W',
+
+        // could do a little error checking here
+        _ => ' ',
+    }
+}

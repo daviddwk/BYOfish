@@ -1,10 +1,11 @@
 use animation::{blank_animation, load_animation, Animation, Position, Size};
-use color_glyph::ColorGlyph;
 use color_glyph::EMPTY_COLOR_GLYPH;
+use color_glyph::{color_to_char, ColorGlyph};
 use commands::Direction;
 use crossterm::style::Color;
 use crossterm::{cursor::MoveTo, ExecutableCommand};
 use open_json::open_json;
+use serde_json::json;
 use std::io::stdout;
 use std::path::PathBuf;
 
@@ -44,9 +45,9 @@ impl Asset {
     //     };
     // }
 
-    pub fn get_animation(&self) -> Animation {
-        return self.animation.clone();
-    }
+    //pub fn get_animation(&self) -> Animation {
+    //    return self.animation.clone();
+    //}
 
     pub fn get_size(&self) -> Size {
         return Size {
@@ -253,5 +254,67 @@ impl Asset {
             self.animation.remove(self.current_frame);
             self.current_frame = self.current_frame % self.get_size().height;
         }
+    }
+
+    pub fn export(&mut self) -> serde_json::Value {
+        let size = self.get_size();
+        let num_frames = self.get_frame_num();
+
+        let mut forward_animation_symbols: Vec<Vec<String>> = Vec::new();
+        let mut forward_animation_colors: Vec<Vec<String>> = Vec::new();
+        let mut forward_animation_highlights: Vec<Vec<String>> = Vec::new();
+
+        let mut flipped_animation_symbols: Vec<Vec<String>> = Vec::new();
+        let mut flipped_animation_colors: Vec<Vec<String>> = Vec::new();
+        let mut flipped_animation_highlights: Vec<Vec<String>> = Vec::new();
+
+        // I should learn that fancy functional stuff
+        for frame_idx in 0..num_frames {
+            forward_animation_symbols.push(Vec::new());
+            forward_animation_colors.push(Vec::new());
+            forward_animation_highlights.push(Vec::new());
+
+            flipped_animation_symbols.push(Vec::new());
+            flipped_animation_colors.push(Vec::new());
+            flipped_animation_highlights.push(Vec::new());
+
+            for line_idx in 0..size.height {
+                forward_animation_symbols[frame_idx].push(String::new());
+                forward_animation_colors[frame_idx].push(String::new());
+                forward_animation_highlights[frame_idx].push(String::new());
+
+                flipped_animation_symbols[frame_idx].push(String::new());
+                flipped_animation_colors[frame_idx].push(String::new());
+                flipped_animation_highlights[frame_idx].push(String::new());
+
+                for glyph_idx in 0..size.width {
+                    let color_glyph = self.animation[frame_idx][line_idx][glyph_idx];
+                    forward_animation_symbols[frame_idx][line_idx].push(color_glyph.glyph);
+                    forward_animation_colors[frame_idx][line_idx]
+                        .push(color_to_char(&color_glyph.foreground_color));
+                    forward_animation_highlights[frame_idx][line_idx]
+                        .push(color_to_char(&color_glyph.background_color));
+
+                    flipped_animation_symbols[frame_idx][line_idx].push(color_glyph.glyph);
+                    flipped_animation_colors[frame_idx][line_idx]
+                        .push(color_to_char(&color_glyph.foreground_color));
+                    flipped_animation_highlights[frame_idx][line_idx]
+                        .push(color_to_char(&color_glyph.background_color));
+                }
+            }
+        }
+
+        return json!({
+            "forward_animation": {
+                "symbols": forward_animation_symbols,
+                "colors": forward_animation_colors,
+                "highlights": forward_animation_highlights,
+            },
+            "flipped_animation": {
+                "symbols": flipped_animation_symbols,
+                "colors": flipped_animation_colors,
+                "highlights": flipped_animation_highlights,
+            },
+        });
     }
 }

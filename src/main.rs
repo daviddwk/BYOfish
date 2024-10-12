@@ -23,10 +23,10 @@ use error::error;
 mod asset;
 mod open_json;
 use asset::Asset;
+use open_json::*;
 mod commands;
 use commands::Command;
 mod input;
-use animation::export_asset;
 use input::handle_blocking_input;
 #[derive(StructOpt)]
 #[structopt(
@@ -40,6 +40,9 @@ fn main() {
     let _args = Opt::from_args();
     let asset_path: PathBuf = home::home_dir().unwrap().join("Documents");
     let mut asset = Asset::new(&asset_path, "test");
+    let asset_json = asset.export();
+    let json_string = format_json(&asset_json);
+    println!("{}", json_string);
     // init terminal
     enable_raw_mode().unwrap();
     stdout().execute(Hide).unwrap();
