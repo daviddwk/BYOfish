@@ -1,6 +1,7 @@
 use std::io::stdout;
 use std::process::exit;
 extern crate structopt;
+use std::path::PathBuf;
 use structopt::StructOpt;
 
 extern crate crossterm;
@@ -13,9 +14,9 @@ extern crate colored;
 extern crate home;
 extern crate rand;
 extern crate serde_json;
+use home::home_dir;
 
 mod animation;
-use animation::{blank_animation, Position, Size};
 mod color_glyph;
 mod error;
 use error::error;
@@ -25,8 +26,8 @@ use asset::Asset;
 mod commands;
 use commands::Command;
 mod input;
+use animation::export_asset;
 use input::handle_blocking_input;
-
 #[derive(StructOpt)]
 #[structopt(
     name = "byofish",
@@ -37,19 +38,8 @@ struct Opt {}
 
 fn main() {
     let _args = Opt::from_args();
-    let mut asset: Asset = Asset {
-        animation: blank_animation(Size {
-            height: 3,
-            width: 3,
-        }),
-        size: Size {
-            height: 3,
-            width: 3,
-        },
-        cursor_position: Position { x: 0, y: 0 },
-        current_frame: 0,
-    };
-
+    let asset_path: PathBuf = home::home_dir().unwrap().join("Documents");
+    let mut asset = Asset::new(&asset_path, "test");
     // init terminal
     enable_raw_mode().unwrap();
     stdout().execute(Hide).unwrap();
@@ -61,27 +51,20 @@ fn main() {
         .unwrap();
 
     // main loop
-    let mut cmd = Command {
-        quit: false,
-        move_cursor: None,
-        resize: None,
-        cycle_frame: None,
-        set_char: None,
-        set_color: None,
-        add_frame: false,
-        delete_frame: false,
-    };
     loop {
         asset.print();
         println!(
             "frame: {}, height:{} width:{}",
-            asset.current_frame, asset.size.height, asset.size.width
+            asset.get_frame_idx(),
+            asset.get_size().height,
+            asset.get_size().width
         );
         println!(
             "x:{} y:{}",
-            asset.cursor_position.x, asset.cursor_position.y
+            asset.get_cursor_position().x,
+            asset.get_cursor_position().y
         );
-        cmd = handle_blocking_input();
+        let cmd = handle_blocking_input();
         if let Some(mv) = cmd.move_cursor {
             asset.move_cursor(&mv);
         }

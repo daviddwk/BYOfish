@@ -1,10 +1,11 @@
 extern crate serde_json;
-use serde_json::json;
-
 use crossterm::style::Color;
+use serde_json::json;
+use std::path::PathBuf;
 
 use color_glyph::{ColorGlyph, EMPTY_COLOR_GLYPH};
 use error::error;
+use Asset;
 
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub struct Position {
@@ -218,4 +219,97 @@ pub fn glyph_from_animation(
         return None;
     }
     return Some(anim[frame_idx][row_idx - position.y][glyph_idx - position.x].clone());
+}
+
+pub fn export_asset(asset: &Asset) -> serde_json::Value {
+    let animation = asset.get_animation();
+    let size = asset.get_size();
+    let num_frames = asset.get_frame_num();
+
+    let mut forward_animation_symbols: Vec<Vec<String>> = Vec::new();
+    let mut forward_animation_colors: Vec<Vec<String>> = Vec::new();
+    let mut forward_animation_hilights: Vec<Vec<String>> = Vec::new();
+
+    let mut flipped_animation_symbols: Vec<Vec<String>> = Vec::new();
+    let mut flipped_animation_colors: Vec<Vec<String>> = Vec::new();
+    let mut flipped_animation_hilights: Vec<Vec<String>> = Vec::new();
+
+    // I should learn that fancy functional stuff
+    for frame_idx in 0..num_frames {
+        forward_animation_symbols.push(Vec::new());
+        forward_animation_colors.push(Vec::new());
+        forward_animation_hilights.push(Vec::new());
+
+        flipped_animation_symbols.push(Vec::new());
+        flipped_animation_colors.push(Vec::new());
+        flipped_animation_hilights.push(Vec::new());
+
+        for line_idx in 0..size.height {
+            forward_animation_symbols[frame_idx].push(String::new());
+            forward_animation_colors[frame_idx].push(String::new());
+            forward_animation_hilights[frame_idx].push(String::new());
+
+            flipped_animation_symbols[frame_idx].push(String::new());
+            flipped_animation_colors[frame_idx].push(String::new());
+            flipped_animation_hilights[frame_idx].push(String::new());
+
+            for glyph_idx in 0..size.width {
+                let color_glyph = animation[frame_idx][line_idx][glyph_idx];
+                forward_animation_symbols[frame_idx][line_idx].push(color_glyph.glyph);
+                forward_animation_colors[frame_idx][line_idx]
+                    .push(color_to_char(&color_glyph.foreground_color));
+                forward_animation_hilights[frame_idx][line_idx]
+                    .push(color_to_char(&color_glyph.background_color));
+
+                flipped_animation_symbols[frame_idx][line_idx].push(color_glyph.glyph);
+                flipped_animation_colors[frame_idx][line_idx]
+                    .push(color_to_char(&color_glyph.foreground_color));
+                flipped_animation_hilights[frame_idx][line_idx]
+                    .push(color_to_char(&color_glyph.background_color));
+            }
+        }
+    }
+
+    let json = json!({
+        "forward_animation": {
+            "symbols": forward_animation_symbols,
+            "colors": forward_animation_colors,
+            "hilights": forward_animation_hilights,
+        },
+        "flipped_animation": {
+            "symbols": flipped_animation_symbols,
+            "colors": flipped_animation_colors,
+            "hilights": flipped_animation_hilights,
+        },
+    });
+
+    let cereal = serde_json::to_string(&json);
+    println!("{}", cereal.unwrap());
+
+    return json;
+}
+
+fn color_to_char(color: &Option<Color>) -> char {
+    match color {
+        Some(Color::DarkGrey) => 'a',
+        Some(Color::Red) => 'r',
+        Some(Color::Green) => 'g',
+        Some(Color::Yellow) => 'y',
+        Some(Color::Blue) => 'b',
+        Some(Color::Magenta) => 'm',
+        Some(Color::Cyan) => 'c',
+        Some(Color::White) => 'w',
+
+        Some(Color::Black) => 'A',
+        Some(Color::DarkRed) => 'R',
+        Some(Color::DarkGreen) => 'G',
+        Some(Color::DarkYellow) => 'Y',
+        Some(Color::DarkBlue) => 'B',
+        Some(Color::DarkMagenta) => 'M',
+        Some(Color::DarkCyan) => 'C',
+        Some(Color::Grey) => 'W',
+
+        // could do a little error checking here
+        _ => ' ',
+    }
 }

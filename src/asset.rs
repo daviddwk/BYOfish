@@ -1,29 +1,81 @@
-use animation::{blank_animation, Animation, Position, Size};
+use animation::{blank_animation, load_animation, Animation, Position, Size};
 use color_glyph::ColorGlyph;
 use color_glyph::EMPTY_COLOR_GLYPH;
 use commands::Direction;
 use crossterm::style::Color;
 use crossterm::{cursor::MoveTo, ExecutableCommand};
+use open_json::open_json;
 use std::io::stdout;
+use std::path::PathBuf;
 
 pub struct Asset {
     // this probably shouldn't be public
-    pub animation: Animation,
-    pub size: Size,
-    pub cursor_position: Position,
-    pub current_frame: usize,
+    animation: Animation,
+    cursor_position: Position,
+    current_frame: usize,
 }
 
 impl Asset {
+    pub fn new(path: &PathBuf, name: &str) -> Asset {
+        // make so you give a path and it opens the file
+        //   then it lists the animations and lets you cycle through them with like
+        //   page up or down or somthing
+        //
+        // hardcode to look for forward/flipped_animation as well as
+        //   foreground / background animation
+        let anim_json = open_json(path, name, "fish");
+        let anim: Animation = load_animation(&anim_json, "test fish", "/forward_animation");
+        return Asset {
+            animation: anim,
+            cursor_position: Position { x: 0, y: 0 },
+            current_frame: 0,
+        };
+    }
+
+    // tmp
+    // pub fn new() -> Asset {
+    //     return Asset {
+    //         animation: blank_animation(Size {
+    //             height: 3,
+    //             width: 3,
+    //         }),
+    //         cursor_position: Position { x: 0, y: 0 },
+    //         current_frame: 0,
+    //     };
+    // }
+
+    pub fn get_animation(&self) -> Animation {
+        return self.animation.clone();
+    }
+
+    pub fn get_size(&self) -> Size {
+        return Size {
+            width: self.animation[0][0].len(),
+            height: self.animation[0].len(),
+        };
+    }
+
+    pub fn get_frame_idx(&self) -> usize {
+        return self.current_frame;
+    }
+
+    pub fn get_frame_num(&self) -> usize {
+        return self.animation.len();
+    }
+
+    pub fn get_cursor_position(&self) -> Position {
+        return self.cursor_position;
+    }
+
     pub fn print(&self) {
         stdout().execute(MoveTo(0, 0)).unwrap();
         let frame_idx = self.current_frame;
-        for line_idx in 0..self.size.height {
+        for line_idx in 0..self.get_size().height {
             // print top line
             if line_idx == 0 {
-                print!("┏{}┓ \r\n", "━".repeat(self.size.width));
+                print!("┏{}┓ \r\n", "━".repeat(self.get_size().width));
             }
-            for glyph_idx in 0..self.size.width {
+            for glyph_idx in 0..self.get_size().width {
                 if glyph_idx == 0 {
                     print!("┃");
                 }
@@ -42,14 +94,14 @@ impl Asset {
                 } else {
                     self.animation[frame_idx][line_idx][glyph_idx].print();
                 }
-                if glyph_idx == self.size.width - 1 {
+                if glyph_idx == self.get_size().width - 1 {
                     print!("┃ ");
                 }
             }
             print!("\r\n");
             // print bottom line
-            if line_idx == self.size.height - 1 {
-                print!("┗{}┛ \r\n", "━".repeat(self.size.width));
+            if line_idx == self.get_size().height - 1 {
+                print!("┗{}┛ \r\n", "━".repeat(self.get_size().width));
             }
         }
     }
@@ -61,7 +113,7 @@ impl Asset {
                 }
             }
             Direction::Right => {
-                if self.cursor_position.x < self.size.width - 1 {
+                if self.cursor_position.x < self.get_size().width - 1 {
                     self.cursor_position.x += 1;
                 }
             }
@@ -71,7 +123,7 @@ impl Asset {
                 }
             }
             Direction::Down => {
-                if self.cursor_position.y < self.size.height - 1 {
+                if self.cursor_position.y < self.get_size().height - 1 {
                     self.cursor_position.y += 1;
                 }
             }
@@ -87,24 +139,24 @@ impl Asset {
             // size should just be a function shouldn't it
             if *direction == Direction::Up || *direction == Direction::Down {
                 if grow {
-                    self.size.height += 1;
+                    self.get_size().height += 1;
                 } else {
                     // so it doesn't shrink to nothing
-                    if self.size.height <= 1 {
+                    if self.get_size().height <= 1 {
                         break;
                     }
-                    self.size.height -= 1;
+                    self.get_size().height -= 1;
                 }
             } else {
                 // else must be left or right
                 if grow {
-                    self.size.width += 1;
+                    self.get_size().width += 1;
                 } else {
                     // so it doesn't shrink to nothing
-                    if self.size.width <= 1 {
+                    if self.get_size().width <= 1 {
                         break;
                     }
-                    self.size.width -= 1;
+                    self.get_size().width -= 1;
                 }
             }
             // this could be inverted and it might be better
@@ -153,11 +205,12 @@ impl Asset {
                 }
             }
         }
-        if self.cursor_position.x >= self.animation[0][0].len() {
-            self.cursor_position.x = self.animation[0][0].len() - 1;
+        let asset_size: Size = self.get_size();
+        if self.cursor_position.x >= asset_size.width {
+            self.cursor_position.x = asset_size.width - 1;
         }
-        if self.cursor_position.y >= self.animation[0].len() {
-            self.cursor_position.y = self.animation[0].len() - 1;
+        if self.cursor_position.y >= asset_size.height {
+            self.cursor_position.y = asset_size.height - 1;
         }
     }
 
@@ -181,7 +234,7 @@ impl Asset {
 
     pub fn cycle_frame(&mut self, delta: isize) {
         let new_frame_idx =
-            (self.current_frame as isize + delta).rem_euclid(self.animation.len() as isize);
+            (self.current_frame as isize + delta).rem_euclid(self.get_frame_num() as isize);
         println!("new_frame_idx: {}", new_frame_idx);
         self.current_frame = new_frame_idx as usize;
     }
@@ -191,18 +244,14 @@ impl Asset {
             self.current_frame,
             // TODO make get height and width functions
             // because this is pretty dumb
-            blank_animation(Size {
-                height: self.animation[0].len(),
-                width: self.animation[0][0].len(),
-            })[0]
-                .clone(),
+            blank_animation(self.get_size())[0].clone(),
         );
     }
 
     pub fn delete_frame(&mut self) {
         if !(self.animation.len() <= 1) {
             self.animation.remove(self.current_frame);
-            self.current_frame = self.current_frame % self.animation[0].len();
+            self.current_frame = self.current_frame % self.get_size().height;
         }
     }
 }
