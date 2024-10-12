@@ -33,22 +33,6 @@ impl Asset {
         };
     }
 
-    // tmp
-    // pub fn new() -> Asset {
-    //     return Asset {
-    //         animation: blank_animation(Size {
-    //             height: 3,
-    //             width: 3,
-    //         }),
-    //         cursor_position: Position { x: 0, y: 0 },
-    //         current_frame: 0,
-    //     };
-    // }
-
-    //pub fn get_animation(&self) -> Animation {
-    //    return self.animation.clone();
-    //}
-
     pub fn get_size(&self) -> Size {
         return Size {
             width: self.animation[0][0].len(),

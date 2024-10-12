@@ -9,7 +9,6 @@ use crossterm::{
 use commands::{Command, Direction};
 
 pub fn handle_blocking_input() -> Command {
-    // blocking read
     let mut command = Command {
         quit: false,
         move_cursor: None,
@@ -21,14 +20,16 @@ pub fn handle_blocking_input() -> Command {
         delete_frame: false,
     };
 
-    match read().unwrap() {
-        // TODO: Capital Q does not work here
-        Event::Key(KeyEvent {
-            code: KeyCode::Char('q'),
-            modifiers: KeyModifiers::NONE,
-            kind: KeyEventKind::Press,
-            state: KeyEventState::NONE,
-        }) => command.quit = true,
+    // this blocks until somthing happens
+    let event = crossterm::event::read().unwrap();
+
+    command.set_char = match_set_char(&event);
+    command.set_color = match_set_color(&event);
+
+    match event {
+        //
+        // EXIT
+        //
         Event::Key(KeyEvent {
             code: KeyCode::Esc,
             modifiers: KeyModifiers::NONE,
@@ -60,6 +61,8 @@ pub fn handle_blocking_input() -> Command {
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => command.move_cursor = Some(Direction::Down),
+        //
+        // RESIZE
         // grow
         // TODO make a grow / shrink mode for this and for adding / removing frames
         Event::Key(KeyEvent {
@@ -86,7 +89,7 @@ pub fn handle_blocking_input() -> Command {
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => command.resize = Some((Direction::Down, 1)),
-        //
+        // shrink
         Event::Key(KeyEvent {
             code: KeyCode::Left,
             modifiers: KeyModifiers::SHIFT,
@@ -111,47 +114,9 @@ pub fn handle_blocking_input() -> Command {
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => command.resize = Some((Direction::Down, -1)),
-        // set char
-        // this could definitely be a macro maybe idk
-        Event::Key(KeyEvent {
-            code: KeyCode::Char('a'),
-            modifiers: KeyModifiers::NONE,
-            kind: KeyEventKind::Press,
-            state: KeyEventState::NONE,
-        }) => command.set_char = Some('a'),
-        Event::Key(KeyEvent {
-            code: KeyCode::Char('b'),
-            modifiers: KeyModifiers::NONE,
-            kind: KeyEventKind::Press,
-            state: KeyEventState::NONE,
-        }) => command.set_char = Some('b'),
-        // set color
-        // todo make switch between mode for colors
-        Event::Key(KeyEvent {
-            code: KeyCode::Char('a'),
-            modifiers: KeyModifiers::CONTROL,
-            kind: KeyEventKind::Press,
-            state: KeyEventState::NONE,
-        }) => command.set_color = Some(Color::DarkGrey),
-        Event::Key(KeyEvent {
-            code: KeyCode::Char('A'),
-            modifiers: KeyModifiers::CONTROL,
-            kind: KeyEventKind::Press,
-            state: KeyEventState::NONE,
-        }) => command.set_color = Some(Color::Black),
-        Event::Key(KeyEvent {
-            code: KeyCode::Char('r'),
-            modifiers: KeyModifiers::CONTROL,
-            kind: KeyEventKind::Press,
-            state: KeyEventState::NONE,
-        }) => command.set_color = Some(Color::Red),
-        Event::Key(KeyEvent {
-            code: KeyCode::Char('R'),
-            modifiers: KeyModifiers::CONTROL,
-            kind: KeyEventKind::Press,
-            state: KeyEventState::NONE,
-        }) => command.set_color = Some(Color::DarkRed),
-
+        //
+        // FRAMES
+        //
         Event::Key(KeyEvent {
             code: KeyCode::Insert,
             modifiers: KeyModifiers::NONE,
@@ -176,8 +141,119 @@ pub fn handle_blocking_input() -> Command {
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => command.cycle_frame = Some(-1),
-
-        _ => (),
+        _ => {}
     };
     return command;
+}
+
+fn match_set_char(event: &crossterm::event::Event) -> Option<char> {
+    if let Event::Key(key_event) = event {
+        if let KeyCode::Char(c) = key_event.code {
+            return Some(c);
+        }
+    }
+    return None;
+}
+
+fn match_set_color(event: &crossterm::event::Event) -> Option<Color> {
+    match event {
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('a'),
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => return Some(Color::DarkGrey),
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('r'),
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => return Some(Color::Red),
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('g'),
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => return Some(Color::Green),
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('y'),
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => return Some(Color::Yellow),
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('b'),
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => return Some(Color::Blue),
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('m'),
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => return Some(Color::Magenta),
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('c'),
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => return Some(Color::Cyan),
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('w'),
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => return Some(Color::White),
+        // dark colors
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('A'),
+            modifiers: KeyModifiers::SHIFT,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => return Some(Color::Black),
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('R'),
+            modifiers: KeyModifiers::SHIFT,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => return Some(Color::DarkRed),
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('G'),
+            modifiers: KeyModifiers::SHIFT,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => return Some(Color::DarkGreen),
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('Y'),
+            modifiers: KeyModifiers::SHIFT,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => return Some(Color::DarkYellow),
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('B'),
+            modifiers: KeyModifiers::SHIFT,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => return Some(Color::DarkBlue),
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('M'),
+            modifiers: KeyModifiers::SHIFT,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => return Some(Color::DarkMagenta),
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('C'),
+            modifiers: KeyModifiers::SHIFT,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => return Some(Color::DarkCyan),
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('W'),
+            modifiers: KeyModifiers::SHIFT,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => return Some(Color::Grey),
+        _ => return None,
+    };
 }
