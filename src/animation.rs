@@ -1,6 +1,6 @@
 extern crate serde_json;
-use crossterm::style::Color;
 use serde_json::json;
+use terminal;
 
 use color_glyph::{ColorGlyph, EMPTY_COLOR_GLYPH};
 use error::error;
@@ -172,25 +172,25 @@ fn check_string(json_string: &serde_json::Value, target_size: usize, name: &str)
     }
 }
 
-fn match_color(color: char) -> Option<Color> {
+fn match_color(color: char) -> Option<terminal::Color> {
     match color {
-        'a' => return Some(Color::DarkGrey),
-        'r' => return Some(Color::Red),
-        'g' => return Some(Color::Green),
-        'y' => return Some(Color::Yellow),
-        'b' => return Some(Color::Blue),
-        'm' => return Some(Color::Magenta),
-        'c' => return Some(Color::Cyan),
-        'w' => return Some(Color::White),
+        'a' => return Some(terminal::Color::DarkGrey),
+        'r' => return Some(terminal::Color::Red),
+        'g' => return Some(terminal::Color::Green),
+        'y' => return Some(terminal::Color::Yellow),
+        'b' => return Some(terminal::Color::Blue),
+        'm' => return Some(terminal::Color::Magenta),
+        'c' => return Some(terminal::Color::Cyan),
+        'w' => return Some(terminal::Color::White),
 
-        'A' => return Some(Color::Black),
-        'R' => return Some(Color::DarkRed),
-        'G' => return Some(Color::DarkGreen),
-        'Y' => return Some(Color::DarkYellow),
-        'B' => return Some(Color::DarkBlue),
-        'M' => return Some(Color::DarkMagenta),
-        'C' => return Some(Color::DarkCyan),
-        'W' => return Some(Color::Grey),
+        'A' => return Some(terminal::Color::Black),
+        'R' => return Some(terminal::Color::DarkRed),
+        'G' => return Some(terminal::Color::DarkGreen),
+        'Y' => return Some(terminal::Color::DarkYellow),
+        'B' => return Some(terminal::Color::DarkBlue),
+        'M' => return Some(terminal::Color::DarkMagenta),
+        'C' => return Some(terminal::Color::DarkCyan),
+        'W' => return Some(terminal::Color::Grey),
 
         _ => return None,
     }

@@ -1,14 +1,12 @@
 use animation::{blank_animation, load_animation, Animation, Position, Size};
 use color_glyph::EMPTY_COLOR_GLYPH;
 use color_glyph::{color_to_char, ColorGlyph};
-use crossterm::cursor::MoveTo;
-use crossterm::style::{Color, SetBackgroundColor, SetForegroundColor};
-use crossterm::ExecutableCommand;
 use input::Direction;
 use open_json::open_json;
 use serde_json::json;
 use std::io::stdout;
 use std::path::PathBuf;
+use terminal;
 
 pub struct Asset {
     // this probably shouldn't be public
@@ -58,14 +56,14 @@ impl Asset {
         for line_idx in 0..self.get_size().height {
             // print top line
             if line_idx == 0 {
-                stdout().execute(SetForegroundColor(Color::Reset)).unwrap();
-                stdout().execute(SetBackgroundColor(Color::Reset)).unwrap();
+                terminal::set_foreground_color(terminal::Color::Default);
+                terminal::set_background_color(terminal::Color::Default);
                 print!("┏{}┓ \r\n", "━".repeat(self.get_size().width));
             }
             for glyph_idx in 0..self.get_size().width {
                 if glyph_idx == 0 {
-                    stdout().execute(SetForegroundColor(Color::Reset)).unwrap();
-                    stdout().execute(SetBackgroundColor(Color::Reset)).unwrap();
+                    terminal::set_foreground_color(terminal::Color::Default);
+                    terminal::set_background_color(terminal::Color::Default);
                     print!("┃");
                 }
                 let pos = Position {
@@ -84,8 +82,8 @@ impl Asset {
                     self.animation[frame_idx][line_idx][glyph_idx].print();
                 }
                 if glyph_idx == self.get_size().width - 1 {
-                    stdout().execute(SetForegroundColor(Color::Reset)).unwrap();
-                    stdout().execute(SetBackgroundColor(Color::Reset)).unwrap();
+                    terminal::set_foreground_color(terminal::Color::Default);
+                    terminal::set_background_color(terminal::Color::Default);
                     print!("┃ ");
                 }
             }
@@ -216,12 +214,12 @@ impl Asset {
         self.animation[frame_idx][line_idx][glyph_idx] = color_glyph;
     }
 
-    pub fn set_color(&mut self, color: Color) {
+    pub fn set_color(&mut self, color: &terminal::Color) {
         let frame_idx = self.current_frame;
         let line_idx = self.cursor_position.y;
         let glyph_idx = self.cursor_position.x;
         let mut color_glyph = self.animation[frame_idx][line_idx][glyph_idx];
-        color_glyph.foreground_color = Some(color);
+        color_glyph.foreground_color = Some(*color);
         self.animation[frame_idx][line_idx][glyph_idx] = color_glyph;
     }
 
