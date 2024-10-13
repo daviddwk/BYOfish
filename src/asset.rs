@@ -1,10 +1,10 @@
 use animation::{blank_animation, load_animation, Animation, Position, Size};
 use color_glyph::EMPTY_COLOR_GLYPH;
 use color_glyph::{color_to_char, ColorGlyph};
-use commands::Direction;
 use crossterm::cursor::MoveTo;
 use crossterm::style::{Color, SetBackgroundColor, SetForegroundColor};
 use crossterm::ExecutableCommand;
+use input::Direction;
 use open_json::open_json;
 use serde_json::json;
 use std::io::stdout;
@@ -122,7 +122,7 @@ impl Asset {
         }
     }
 
-    pub fn resize(&mut self, direction: &Direction, delta: i32) {
+    pub fn resize(&mut self, direction: &Direction, delta: isize) {
         let delta_abs = delta.abs();
         let grow = delta.is_positive();
 
@@ -177,14 +177,16 @@ impl Asset {
                         if grow {
                             self.animation[frame_idx][line_idx].insert(0, EMPTY_COLOR_GLYPH);
                             // cursor moves naturally with growth
-                            if line_idx == 0 {
+                            if line_idx == 0 && frame_idx == 0 {
                                 self.cursor_position.x += 1;
                             }
                         } else {
                             self.animation[frame_idx][line_idx].remove(0);
                             // this is a sign this code sucks
-                            if line_idx == 0 {
-                                self.cursor_position.x -= 1;
+                            if line_idx == 0 && frame_idx == 0 {
+                                if self.cursor_position.x != 0 {
+                                    self.cursor_position.x -= 1;
+                                }
                             }
                         }
                     } else if *direction == Direction::Right {
