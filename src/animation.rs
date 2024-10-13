@@ -1,11 +1,9 @@
 extern crate serde_json;
 use crossterm::style::Color;
 use serde_json::json;
-use std::path::PathBuf;
 
 use color_glyph::{ColorGlyph, EMPTY_COLOR_GLYPH};
 use error::error;
-use Asset;
 
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub struct Position {

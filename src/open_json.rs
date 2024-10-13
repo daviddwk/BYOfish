@@ -39,20 +39,20 @@ pub fn format_json(json: &serde_json::Value) -> String {
         if !in_quotes && (c == '{' || c == '[') {
             depth += 1;
             json_formatted.push('\n');
-            for i in 0..depth {
+            for _i in 0..depth {
                 json_formatted.push(' ');
             }
         } else if !in_quotes && (c == '}' || c == ']') {
             depth -= 1;
             json_formatted.push('\n');
-            for i in 0..depth {
+            for _i in 0..depth {
                 json_formatted.push(' ');
             }
         }
 
         if !in_quotes && (c == ',' && prev_c == '"') {
             json_formatted.push('\n');
-            for i in 0..depth {
+            for _i in 0..depth {
                 json_formatted.push(' ');
             }
         }

@@ -1,13 +1,30 @@
 use crossterm::{
-    cursor::{Hide, MoveTo, Show},
-    event::{poll, read, Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
+    event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
     style::Color,
-    terminal::{disable_raw_mode, enable_raw_mode, Clear},
-    ExecutableCommand,
 };
 
-use commands::{Command, Direction};
 use mode::EditorMode;
+
+#[derive(PartialEq)]
+pub enum Direction {
+    Left,
+    Right,
+    Up,
+    Down,
+}
+
+pub struct Command {
+    pub quit: bool,
+    pub move_cursor: Option<Direction>,
+    pub resize: Option<(Direction, isize)>,
+    pub cycle_frame: Option<isize>,
+    pub set_char: Option<char>,
+    pub set_color: Option<Color>,
+    pub add_frame: bool,
+    pub delete_frame: bool,
+    pub cycle_mode: bool,
+    // play animation isize number times
+}
 
 pub fn handle_blocking_input(mode: &EditorMode) -> Command {
     let mut command = Command {
@@ -25,136 +42,154 @@ pub fn handle_blocking_input(mode: &EditorMode) -> Command {
     // this blocks until somthing happens
     let event = crossterm::event::read().unwrap();
 
+    command.quit = match_exit(&event);
+    command.cycle_mode = match_cycle_mode(&event);
+    command.move_cursor = match_move_cursor(&event);
+    command.resize = match_resize(&event);
+    command.add_frame = match_add_frame(&event);
+    command.delete_frame = match_delete_frame(&event);
+    command.cycle_frame = match_cycle_frame(&event);
+
     if *mode == EditorMode::Glyph {
         command.set_char = match_set_char(&event);
     } else if *mode == EditorMode::Color {
         command.set_color = match_set_color(&event);
     }
 
+    return command;
+}
+
+fn match_exit(event: &crossterm::event::Event) -> bool {
+    if let Event::Key(key_event) = event {
+        if let KeyCode::Esc = key_event.code {
+            return true;
+        }
+    }
+    return false;
+}
+
+fn match_cycle_mode(event: &crossterm::event::Event) -> bool {
+    if let Event::Key(key_event) = event {
+        if let KeyCode::Tab = key_event.code {
+            return true;
+        }
+    }
+    return false;
+}
+
+fn match_move_cursor(event: &crossterm::event::Event) -> Option<Direction> {
     match event {
-        Event::Key(KeyEvent {
-            code: KeyCode::Tab,
-            modifiers: KeyModifiers::NONE,
-            kind: KeyEventKind::Press,
-            state: KeyEventState::NONE,
-        }) => command.cycle_mode = true,
-        //
-        // EXIT
-        //
-        Event::Key(KeyEvent {
-            code: KeyCode::Esc,
-            modifiers: KeyModifiers::NONE,
-            kind: KeyEventKind::Press,
-            state: KeyEventState::NONE,
-        }) => command.quit = true,
         // move
         Event::Key(KeyEvent {
             code: KeyCode::Left,
             modifiers: KeyModifiers::NONE,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => command.move_cursor = Some(Direction::Left),
+        }) => return Some(Direction::Left),
         Event::Key(KeyEvent {
             code: KeyCode::Right,
             modifiers: KeyModifiers::NONE,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => command.move_cursor = Some(Direction::Right),
+        }) => return Some(Direction::Right),
         Event::Key(KeyEvent {
             code: KeyCode::Up,
             modifiers: KeyModifiers::NONE,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => command.move_cursor = Some(Direction::Up),
+        }) => return Some(Direction::Up),
         Event::Key(KeyEvent {
             code: KeyCode::Down,
             modifiers: KeyModifiers::NONE,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => command.move_cursor = Some(Direction::Down),
-        //
-        // RESIZE
-        // grow
-        // TODO make a grow / shrink mode for this and for adding / removing frames
+        }) => return Some(Direction::Down),
+        _ => return None,
+    }
+}
+
+fn match_resize(event: &crossterm::event::Event) -> Option<(Direction, isize)> {
+    match event {
         Event::Key(KeyEvent {
             code: KeyCode::Left,
             modifiers: KeyModifiers::CONTROL,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => command.resize = Some((Direction::Left, 1)),
+        }) => return Some((Direction::Left, 1)),
         Event::Key(KeyEvent {
             code: KeyCode::Right,
             modifiers: KeyModifiers::CONTROL,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => command.resize = Some((Direction::Right, 1)),
+        }) => return Some((Direction::Right, 1)),
         Event::Key(KeyEvent {
             code: KeyCode::Up,
             modifiers: KeyModifiers::CONTROL,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => command.resize = Some((Direction::Up, 1)),
+        }) => return Some((Direction::Up, 1)),
         Event::Key(KeyEvent {
             code: KeyCode::Down,
             modifiers: KeyModifiers::CONTROL,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => command.resize = Some((Direction::Down, 1)),
+        }) => return Some((Direction::Down, 1)),
         // shrink
         Event::Key(KeyEvent {
             code: KeyCode::Left,
             modifiers: KeyModifiers::SHIFT,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => command.resize = Some((Direction::Left, -1)),
+        }) => return Some((Direction::Left, -1)),
         Event::Key(KeyEvent {
             code: KeyCode::Right,
             modifiers: KeyModifiers::SHIFT,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => command.resize = Some((Direction::Right, -1)),
+        }) => return Some((Direction::Right, -1)),
         Event::Key(KeyEvent {
             code: KeyCode::Up,
             modifiers: KeyModifiers::SHIFT,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => command.resize = Some((Direction::Up, -1)),
+        }) => return Some((Direction::Up, -1)),
         Event::Key(KeyEvent {
             code: KeyCode::Down,
             modifiers: KeyModifiers::SHIFT,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => command.resize = Some((Direction::Down, -1)),
-        //
-        // FRAMES
-        //
-        Event::Key(KeyEvent {
-            code: KeyCode::Insert,
-            modifiers: KeyModifiers::NONE,
-            kind: KeyEventKind::Press,
-            state: KeyEventState::NONE,
-        }) => command.add_frame = true,
-        Event::Key(KeyEvent {
-            code: KeyCode::Delete,
-            modifiers: KeyModifiers::NONE,
-            kind: KeyEventKind::Press,
-            state: KeyEventState::NONE,
-        }) => command.delete_frame = true,
-        Event::Key(KeyEvent {
-            code: KeyCode::PageUp,
-            modifiers: KeyModifiers::NONE,
-            kind: KeyEventKind::Press,
-            state: KeyEventState::NONE,
-        }) => command.cycle_frame = Some(1),
-        Event::Key(KeyEvent {
-            code: KeyCode::PageDown,
-            modifiers: KeyModifiers::NONE,
-            kind: KeyEventKind::Press,
-            state: KeyEventState::NONE,
-        }) => command.cycle_frame = Some(-1),
-        _ => {}
-    };
-    return command;
+        }) => return Some((Direction::Down, -1)),
+        _ => None,
+    }
+}
+
+fn match_add_frame(event: &crossterm::event::Event) -> bool {
+    if let Event::Key(key_event) = event {
+        if let KeyCode::Insert = key_event.code {
+            return true;
+        }
+    }
+    return false;
+}
+
+fn match_delete_frame(event: &crossterm::event::Event) -> bool {
+    if let Event::Key(key_event) = event {
+        if let KeyCode::Delete = key_event.code {
+            return true;
+        }
+    }
+    return false;
+}
+
+fn match_cycle_frame(event: &crossterm::event::Event) -> Option<isize> {
+    if let Event::Key(key_event) = event {
+        if let KeyCode::PageUp = key_event.code {
+            return Some(1);
+        } else if let KeyCode::PageDown = key_event.code {
+            return Some(-1);
+        }
+    }
+    return None;
 }
 
 fn match_set_char(event: &crossterm::event::Event) -> Option<char> {

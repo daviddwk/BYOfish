@@ -5,16 +5,11 @@ use std::path::PathBuf;
 use structopt::StructOpt;
 
 extern crate crossterm;
-use crossterm::{
-    cursor::{Hide, Show},
-    terminal::{disable_raw_mode, enable_raw_mode, Clear},
-    ExecutableCommand,
-};
+use crossterm::ExecutableCommand;
 extern crate colored;
 extern crate home;
 extern crate rand;
 extern crate serde_json;
-use home::home_dir;
 
 mod mode;
 use mode::EditorMode;
@@ -25,17 +20,16 @@ use error::error;
 mod asset;
 mod open_json;
 use asset::Asset;
-use open_json::*;
-mod commands;
-use commands::Command;
 mod input;
 use input::handle_blocking_input;
+
 #[derive(StructOpt)]
 #[structopt(
     name = "byofish",
     version = "0.0.1",
     about = "Create assets for freefish!"
 )]
+
 struct Opt {}
 
 fn main() {
@@ -46,13 +40,15 @@ fn main() {
     let asset_path: PathBuf = home::home_dir().unwrap().join("Documents");
     let mut asset = Asset::new(&asset_path, "test");
     // init terminal
-    enable_raw_mode().unwrap();
-    stdout().execute(Hide).unwrap();
+    crossterm::terminal::enable_raw_mode().unwrap();
+    stdout().execute(crossterm::cursor::Hide).unwrap();
     stdout()
         .execute(crossterm::terminal::DisableLineWrap)
         .unwrap();
     stdout()
-        .execute(Clear(crossterm::terminal::ClearType::All))
+        .execute(crossterm::terminal::Clear(
+            crossterm::terminal::ClearType::All,
+        ))
         .unwrap();
 
     // main loop
@@ -111,7 +107,7 @@ fn main() {
     stdout()
         .execute(crossterm::terminal::EnableLineWrap)
         .unwrap();
-    stdout().execute(Show).unwrap();
-    disable_raw_mode().unwrap();
+    stdout().execute(crossterm::cursor::Show).unwrap();
+    crossterm::terminal::disable_raw_mode().unwrap();
     exit(0);
 }
