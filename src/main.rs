@@ -22,6 +22,8 @@ mod open_json;
 use asset::Asset;
 mod input;
 use input::handle_blocking_input;
+mod decorations;
+use decorations::{print_color_guide, print_frame_indicator};
 
 #[derive(StructOpt)]
 #[structopt(
@@ -53,22 +55,28 @@ fn main() {
 
     // main loop
     loop {
+        stdout().execute(crossterm::cursor::MoveTo(0, 0)).unwrap();
+        print_frame_indicator(asset.get_frame_idx(), asset.get_frame_num());
         asset.print();
+        print_color_guide();
         println!(
-            "frame: {}, height:{} width:{}",
+            "\rframe: {} / {}\n\rheight:{} width:{}",
             asset.get_frame_idx(),
+            asset.get_frame_num(),
             asset.get_size().height,
             asset.get_size().width
         );
+        /*
         println!(
-            "x:{} y:{}",
+            "\rx:{} y:{}",
             asset.get_cursor_position().x,
             asset.get_cursor_position().y
         );
+        */
         if mode == EditorMode::Glyph {
-            println!("mode:glyph");
+            println!("\rmode:glyph");
         } else {
-            println!("mode:color");
+            println!("\rmode:color");
         }
         let cmd = handle_blocking_input(&mode);
         if cmd.cycle_mode {

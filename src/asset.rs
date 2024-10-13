@@ -54,7 +54,6 @@ impl Asset {
     }
 
     pub fn print(&self) {
-        stdout().execute(MoveTo(0, 0)).unwrap();
         let frame_idx = self.current_frame;
         for line_idx in 0..self.get_size().height {
             // print top line
@@ -229,7 +228,6 @@ impl Asset {
     pub fn cycle_frame(&mut self, delta: isize) {
         let new_frame_idx =
             (self.current_frame as isize + delta).rem_euclid(self.get_frame_num() as isize);
-        println!("new_frame_idx: {}", new_frame_idx);
         self.current_frame = new_frame_idx as usize;
     }
 

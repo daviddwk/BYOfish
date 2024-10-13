@@ -12,7 +12,7 @@ pub struct ColorGlyph {
 }
 
 pub const EMPTY_COLOR_GLYPH: ColorGlyph = ColorGlyph {
-    glyph: '.',
+    glyph: ' ',
     foreground_color: None,
     background_color: None,
 };
