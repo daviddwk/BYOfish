@@ -50,7 +50,7 @@ pub fn blocking_get_press() -> Press {
             if let crossterm::event::KeyCode::Char(c) = key_event.code {
                 return Press::new(Key::Glyph(c), from_crossterm_modifier(key_event.modifiers));
             }
-            match key_event {
+            match &key_event {
                 crossterm::event::KeyEvent {
                     code: crossterm::event::KeyCode::Left,
                     ..

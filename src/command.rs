@@ -14,6 +14,7 @@ pub struct Command {
     pub add_frame: bool,
     pub delete_frame: bool,
     pub cycle_mode: bool,
+    pub save_mode: bool,
     // play animation isize number times
 }
 
@@ -28,12 +29,14 @@ pub fn handle_blocking_input(mode: &EditorMode) -> Command {
         add_frame: false,
         delete_frame: false,
         cycle_mode: false,
+        save_mode: false,
     };
 
     let press = input::blocking_get_press();
 
     command.quit = exit(&press);
     command.cycle_mode = cycle_mode(&press);
+    command.save_mode = save_mode(&press);
     command.move_cursor = move_cursor(&press);
     command.resize = resize(&press);
     command.add_frame = add_frame(&press);
@@ -58,6 +61,13 @@ fn exit(press: &input::Press) -> bool {
 
 fn cycle_mode(press: &input::Press) -> bool {
     if press.key == input::Key::Tab {
+        return true;
+    }
+    return false;
+}
+
+fn save_mode(press: &input::Press) -> bool {
+    if press.key == input::Key::Enter {
         return true;
     }
     return false;
