@@ -32,45 +32,45 @@ pub fn handle_blocking_input(mode: &EditorMode) -> Command {
 
     let press = input::blocking_get_press();
 
-    command.quit = match_exit(&press);
-    command.cycle_mode = match_cycle_mode(&press);
-    command.move_cursor = match_move_cursor(&press);
-    command.resize = match_resize(&press);
-    command.add_frame = match_add_frame(&press);
-    command.delete_frame = match_delete_frame(&press);
-    command.cycle_frame = match_cycle_frame(&press);
+    command.quit = exit(&press);
+    command.cycle_mode = cycle_mode(&press);
+    command.move_cursor = move_cursor(&press);
+    command.resize = resize(&press);
+    command.add_frame = add_frame(&press);
+    command.delete_frame = delete_frame(&press);
+    command.cycle_frame = cycle_frame(&press);
 
     if *mode == EditorMode::Glyph {
-        command.set_char = match_set_glyph(&press);
+        command.set_char = set_glyph(&press);
     } else if *mode == EditorMode::Color {
-        command.set_color = match_set_color(&press);
+        command.set_color = set_color(&press);
     }
 
     return command;
 }
 
-fn match_exit(press: &input::Press) -> bool {
+fn exit(press: &input::Press) -> bool {
     if press.key == input::Key::Esc {
         return true;
     }
     return false;
 }
 
-fn match_cycle_mode(press: &input::Press) -> bool {
+fn cycle_mode(press: &input::Press) -> bool {
     if press.key == input::Key::Tab {
         return true;
     }
     return false;
 }
 
-fn match_move_cursor(press: &input::Press) -> Option<input::Direction> {
+fn move_cursor(press: &input::Press) -> Option<input::Direction> {
     if let input::Key::Direction(d) = press.key {
         return Some(d);
     }
     return None;
 }
 
-fn match_resize(press: &input::Press) -> Option<(input::Direction, isize)> {
+fn resize(press: &input::Press) -> Option<(input::Direction, isize)> {
     if let input::Key::Direction(d) = press.key {
         if press.modifier == Some(input::Modifier::Control) {
             return Some((d, 1));
@@ -82,21 +82,21 @@ fn match_resize(press: &input::Press) -> Option<(input::Direction, isize)> {
     return None;
 }
 
-fn match_add_frame(press: &input::Press) -> bool {
+fn add_frame(press: &input::Press) -> bool {
     if press.key == input::Key::Insert {
         return true;
     }
     return false;
 }
 
-fn match_delete_frame(press: &input::Press) -> bool {
+fn delete_frame(press: &input::Press) -> bool {
     if press.key == input::Key::Delete {
         return true;
     }
     return false;
 }
 
-fn match_cycle_frame(press: &input::Press) -> Option<isize> {
+fn cycle_frame(press: &input::Press) -> Option<isize> {
     if press.key == input::Key::PageUp {
         return Some(1);
     } else if press.key == input::Key::PageDown {
@@ -105,14 +105,14 @@ fn match_cycle_frame(press: &input::Press) -> Option<isize> {
     return None;
 }
 
-fn match_set_glyph(press: &input::Press) -> Option<char> {
+fn set_glyph(press: &input::Press) -> Option<char> {
     if let input::Key::Glyph(g) = press.key {
         return Some(g);
     }
     return None;
 }
 
-fn match_set_color(press: &input::Press) -> Option<terminal::Color> {
+fn set_color(press: &input::Press) -> Option<terminal::Color> {
     match *press {
         // lighter colors
         input::Press {

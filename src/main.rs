@@ -23,26 +23,32 @@ mod decorations;
 mod input;
 use decorations::{print_color_guide, print_frame_indicator};
 
-#[derive(StructOpt)]
+#[derive(Debug, StructOpt)]
 #[structopt(
     name = "byofish",
     version = "0.0.1",
     about = "Create assets for freefish!"
 )]
-
-struct Opt {}
+struct Opt {
+    #[structopt(name = "file")]
+    file_name: String,
+}
 
 fn main() {
-    let _args = Opt::from_args();
+    let args = Opt::from_args();
+    let asset_path = PathBuf::from(args.file_name);
+
+    let mut file_name = String::new();
+    if let Some(dir) = asset_path.file_name() {
+        // idk what I'm doing here, so there's probably a safer way
+        file_name = dir.to_os_string().into_string().unwrap();
+    }
+
+    let mut asset = Asset::new(&asset_path, &file_name);
 
     let mut mode = EditorMode::Glyph;
-
-    let asset_path: PathBuf = home::home_dir().unwrap().join("Documents");
-    let mut asset = Asset::new(&asset_path, "test");
-    // init terminal
-
-    // main loop
     terminal::init();
+
     loop {
         terminal::home_cursor();
         print_frame_indicator(asset.get_frame_idx(), asset.get_frame_num());

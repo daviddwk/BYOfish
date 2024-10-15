@@ -3,20 +3,16 @@ use std::fs::File;
 use std::path::PathBuf;
 
 pub fn open_json(path: &PathBuf, name: &str, asset_type: &str) -> serde_json::Value {
-    match File::open(path.join(format!("{}.json", name))) {
+    match File::open(path) {
         Ok(f) => match serde_json::from_reader(f) {
             Ok(j) => return j,
             Err(_e) => error(
-                &format!("{} file {}.json is not proper json", asset_type, name),
+                &format!("{} file {} is not proper json", asset_type, name),
                 1,
             )
             .into(),
         },
-        Err(_e) => error(
-            &format!("could not open {} file {}.json", asset_type, name),
-            1,
-        )
-        .into(),
+        Err(_e) => error(&format!("could not open {} file {}", asset_type, name), 1).into(),
     }
 }
 pub fn format_json(json: &serde_json::Value) -> String {

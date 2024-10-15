@@ -232,8 +232,6 @@ impl Asset {
     pub fn add_frame(&mut self) {
         self.animation.insert(
             self.current_frame,
-            // TODO make get height and width functions
-            // because this is pretty dumb
             blank_animation(self.get_size())[0].clone(),
         );
     }
