@@ -1,10 +1,7 @@
-use std::process::exit;
 extern crate structopt;
 use structopt::StructOpt;
 
 // get rid of this dep
-extern crate colored;
-extern crate rand;
 extern crate serde_json;
 
 mod animation;
@@ -84,5 +81,5 @@ fn main() {
     }
     // return terminal to regular state
     terminal::reset();
-    exit(0);
+    std::process::exit(0);
 }
