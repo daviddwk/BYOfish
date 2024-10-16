@@ -1,19 +1,17 @@
+use pad;
 use terminal::{set_background_color, set_foreground_color, Color};
-
 pub fn print_frame_indicator(frame_idx: usize, frame_num: usize) {
+    let mut indicators = String::from("");
     for idx in 0..frame_num {
         if idx == frame_idx {
-            print!("{}[*] ", idx);
+            indicators = format!("{}{}[*]", indicators, idx)
         } else {
-            print!("{}[ ] ", idx);
+            indicators = format!("{}{}[ ]", indicators, idx)
         }
     }
-    print!("\n\r");
+    pad::print_line(&indicators);
 }
 
-// make a set fg color function
-// and maybe even wrap crossterm::Color
-// to decouple dependency bc why not idk
 pub fn print_color_guide() {
     print!("\r");
     set_foreground_color(Color::Black);
@@ -35,7 +33,7 @@ pub fn print_color_guide() {
     set_background_color(Color::White);
     print!("w");
 
-    print!("\n\r");
+    pad::new_line();
     set_foreground_color(Color::White);
 
     set_background_color(Color::Black);
@@ -58,5 +56,5 @@ pub fn print_color_guide() {
     set_foreground_color(Color::Default);
     set_background_color(Color::Default);
 
-    print!("\n\r");
+    pad::new_line();
 }

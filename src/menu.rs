@@ -1,4 +1,5 @@
 use input;
+use pad;
 
 pub struct FishSettings {}
 
@@ -25,12 +26,12 @@ impl SaveMenu {
 
     pub fn print(&self) {
         match &self.sort {
-            AssetType::Fish(_settings) => println!("Asset Type: < Fish > "),
+            AssetType::Fish(_settings) => pad::print_line("Asset Type: < Fish > "),
             AssetType::Duck(settings) => {
-                println!("Asset Type: < Duck > ");
-                println!("\rBuoyancy: [{}]", settings.buoyancy);
+                pad::print_line("Asset Type: < Duck > ");
+                pad::print_line(&format!("\rBuoyancy: [{}]", settings.buoyancy));
             }
-            AssetType::Crab(_settings) => println!("Asset Type: < Crab > "),
+            AssetType::Crab(_settings) => pad::print_line("Asset Type: < Crab > "),
         }
     }
 

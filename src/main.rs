@@ -16,6 +16,7 @@ mod input;
 mod menu;
 mod mode;
 mod open_json;
+mod pad;
 
 #[derive(Debug, structopt::StructOpt)]
 #[structopt(
@@ -50,6 +51,7 @@ fn main() {
         // if not save mode
         if mode == mode::EditorMode::Save {
             save_menu.print();
+            pad::to_end();
             if !save_menu.handle_blocking_input() {
                 mode = mode::EditorMode::Glyph;
             }
@@ -59,10 +61,11 @@ fn main() {
             decorations::print_color_guide();
             // else print save mode screen
             if mode == mode::EditorMode::Glyph {
-                println!("\rmode:glyph");
+                pad::print_line("\rmode:glyph");
             } else {
-                println!("\rmode:color");
+                pad::print_line("\rmode:color");
             }
+            pad::to_end();
             let cmd = command::handle_blocking_input(&mode);
             if cmd.quit {
                 break;

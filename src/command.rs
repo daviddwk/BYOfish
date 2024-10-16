@@ -75,7 +75,9 @@ fn save_mode(press: &input::Press) -> bool {
 
 fn move_cursor(press: &input::Press) -> Option<input::Direction> {
     if let input::Key::Direction(d) = press.key {
-        return Some(d);
+        if press.modifier.is_none() {
+            return Some(d);
+        }
     }
     return None;
 }
