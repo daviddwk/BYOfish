@@ -4,6 +4,20 @@ use terminal;
 
 use mode::EditorMode;
 
+pub const EMPTY_COMMAND: Command = Command {
+    quit: false,
+    move_cursor: None,
+    resize: None,
+    cycle_frame: None,
+    set_char: None,
+    set_color: None,
+    add_frame: false,
+    delete_frame: false,
+    cycle_mode: false,
+    save_mode: false,
+};
+
+// TODO this seems like it should be an enum
 pub struct Command {
     pub quit: bool,
     pub move_cursor: Option<input::Direction>,
@@ -19,19 +33,7 @@ pub struct Command {
 }
 
 pub fn handle_blocking_input(mode: &EditorMode) -> Command {
-    let mut command = Command {
-        quit: false,
-        move_cursor: None,
-        resize: None,
-        cycle_frame: None,
-        set_char: None,
-        set_color: None,
-        add_frame: false,
-        delete_frame: false,
-        cycle_mode: false,
-        save_mode: false,
-    };
-
+    let mut command = EMPTY_COMMAND;
     let press = input::blocking_get_press();
 
     command.quit = exit(&press);
