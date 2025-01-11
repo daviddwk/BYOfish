@@ -35,24 +35,26 @@ impl SaveMenu {
         }
     }
 
-    pub fn handle_blocking_input(&mut self) -> bool {
-        let press = input::blocking_get_press();
-        if press.key == input::Key::Esc {
-            return false;
-        }
-        if let input::Key::Direction(dir) = press.key {
-            if dir == input::Direction::Left {
-                self.cycle_asset_type(-1);
-            } else if dir == input::Direction::Right {
-                self.cycle_asset_type(1);
+    pub fn handle_input(&mut self) -> bool {
+        if let Some(press) = input::get_press() {
+            if press.key == input::Key::Esc {
+                return false;
             }
-        }
-        if let AssetType::Duck(ref mut settings) = self.sort {
-            if let input::Key::Glyph(glyph) = press.key {
-                if let Some(num) = glyph.to_digit(10) {
-                    settings.buoyancy = num as usize;
+            if let input::Key::Direction(dir) = press.key {
+                if dir == input::Direction::Left {
+                    self.cycle_asset_type(-1);
+                } else if dir == input::Direction::Right {
+                    self.cycle_asset_type(1);
                 }
             }
+            if let AssetType::Duck(ref mut settings) = self.sort {
+                if let input::Key::Glyph(glyph) = press.key {
+                    if let Some(num) = glyph.to_digit(10) {
+                        settings.buoyancy = num as usize;
+                    }
+                }
+            }
+            return true;
         }
         return true;
     }

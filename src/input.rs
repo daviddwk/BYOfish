@@ -44,111 +44,145 @@ impl Press {
     }
 }
 
-pub fn blocking_get_press() -> Press {
+pub fn get_press() -> Option<Press> {
     loop {
+        if !crossterm::event::poll(std::time::Duration::from_millis(10)).unwrap() {
+            return None;
+        }
+        // gauranteed to be Some
         if let crossterm::event::Event::Key(key_event) = crossterm::event::read().unwrap() {
             if let crossterm::event::KeyCode::Char(c) = key_event.code {
-                return Press::new(Key::Glyph(c), from_crossterm_modifier(key_event.modifiers));
+                return Some(Press::new(
+                    Key::Glyph(c),
+                    from_crossterm_modifier(key_event.modifiers),
+                ));
             }
             match &key_event {
                 crossterm::event::KeyEvent {
                     code: crossterm::event::KeyCode::Left,
                     ..
                 } => {
-                    return Press::new(
+                    return Some(Press::new(
                         Key::Direction(Direction::Left),
                         from_crossterm_modifier(key_event.modifiers),
-                    );
+                    ));
                 }
                 crossterm::event::KeyEvent {
                     code: crossterm::event::KeyCode::Right,
                     ..
                 } => {
-                    return Press::new(
+                    return Some(Press::new(
                         Key::Direction(Direction::Right),
                         from_crossterm_modifier(key_event.modifiers),
-                    );
+                    ));
                 }
                 crossterm::event::KeyEvent {
                     code: crossterm::event::KeyCode::Up,
                     ..
                 } => {
-                    return Press::new(
+                    return Some(Press::new(
                         Key::Direction(Direction::Up),
                         from_crossterm_modifier(key_event.modifiers),
-                    );
+                    ));
                 }
                 crossterm::event::KeyEvent {
                     code: crossterm::event::KeyCode::Down,
                     ..
                 } => {
-                    return Press::new(
+                    return Some(Press::new(
                         Key::Direction(Direction::Down),
                         from_crossterm_modifier(key_event.modifiers),
-                    );
+                    ));
                 }
                 crossterm::event::KeyEvent {
                     code: crossterm::event::KeyCode::Esc,
                     ..
                 } => {
-                    return Press::new(Key::Esc, from_crossterm_modifier(key_event.modifiers));
+                    return Some(Press::new(
+                        Key::Esc,
+                        from_crossterm_modifier(key_event.modifiers),
+                    ));
                 }
                 crossterm::event::KeyEvent {
                     code: crossterm::event::KeyCode::Tab,
                     ..
                 } => {
-                    return Press::new(Key::Tab, from_crossterm_modifier(key_event.modifiers));
+                    return Some(Press::new(
+                        Key::Tab,
+                        from_crossterm_modifier(key_event.modifiers),
+                    ));
                 }
                 crossterm::event::KeyEvent {
                     code: crossterm::event::KeyCode::Insert,
                     ..
                 } => {
-                    return Press::new(Key::Insert, from_crossterm_modifier(key_event.modifiers));
+                    return Some(Press::new(
+                        Key::Insert,
+                        from_crossterm_modifier(key_event.modifiers),
+                    ));
                 }
                 crossterm::event::KeyEvent {
                     code: crossterm::event::KeyCode::Delete,
                     ..
                 } => {
-                    return Press::new(Key::Delete, from_crossterm_modifier(key_event.modifiers));
+                    return Some(Press::new(
+                        Key::Delete,
+                        from_crossterm_modifier(key_event.modifiers),
+                    ));
                 }
                 crossterm::event::KeyEvent {
                     code: crossterm::event::KeyCode::Home,
                     ..
                 } => {
-                    return Press::new(Key::Home, from_crossterm_modifier(key_event.modifiers));
+                    return Some(Press::new(
+                        Key::Home,
+                        from_crossterm_modifier(key_event.modifiers),
+                    ));
                 }
                 crossterm::event::KeyEvent {
                     code: crossterm::event::KeyCode::End,
                     ..
                 } => {
-                    return Press::new(Key::End, from_crossterm_modifier(key_event.modifiers));
+                    return Some(Press::new(
+                        Key::End,
+                        from_crossterm_modifier(key_event.modifiers),
+                    ));
                 }
                 crossterm::event::KeyEvent {
                     code: crossterm::event::KeyCode::PageUp,
                     ..
                 } => {
-                    return Press::new(Key::PageUp, from_crossterm_modifier(key_event.modifiers));
+                    return Some(Press::new(
+                        Key::PageUp,
+                        from_crossterm_modifier(key_event.modifiers),
+                    ));
                 }
                 crossterm::event::KeyEvent {
                     code: crossterm::event::KeyCode::PageDown,
                     ..
                 } => {
-                    return Press::new(Key::PageDown, from_crossterm_modifier(key_event.modifiers));
+                    return Some(Press::new(
+                        Key::PageDown,
+                        from_crossterm_modifier(key_event.modifiers),
+                    ));
                 }
                 crossterm::event::KeyEvent {
                     code: crossterm::event::KeyCode::Backspace,
                     ..
                 } => {
-                    return Press::new(
+                    return Some(Press::new(
                         Key::Backspace,
                         from_crossterm_modifier(key_event.modifiers),
-                    );
+                    ));
                 }
                 crossterm::event::KeyEvent {
                     code: crossterm::event::KeyCode::Enter,
                     ..
                 } => {
-                    return Press::new(Key::Enter, from_crossterm_modifier(key_event.modifiers));
+                    return Some(Press::new(
+                        Key::Enter,
+                        from_crossterm_modifier(key_event.modifiers),
+                    ));
                 }
                 _ => (),
             }

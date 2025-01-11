@@ -52,7 +52,7 @@ impl Asset {
         return self.cursor_position;
     }
 
-    pub fn print(&self) {
+    pub fn print(&self, show_cursor: bool) {
         let frame_idx = self.current_frame;
         for line_idx in 0..self.get_size().height {
             // print top line
@@ -72,7 +72,7 @@ impl Asset {
                     y: line_idx,
                 };
                 // TODO make cursor flashing
-                if pos == self.cursor_position {
+                if pos == self.cursor_position && show_cursor {
                     ColorGlyph {
                         glyph: 'X',
                         foreground_color: None,

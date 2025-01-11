@@ -46,18 +46,20 @@ fn main() {
     let mut mode = mode::EditorMode::Glyph;
     terminal::init();
 
+    let start_time = std::time::SystemTime::now();
     loop {
         terminal::home_cursor();
         // if not save mode
         if mode == mode::EditorMode::Save {
             save_menu.print();
             pad::to_end();
-            if !save_menu.handle_blocking_input() {
+            if !save_menu.handle_input() {
                 mode = mode::EditorMode::Glyph;
             }
         } else {
             decorations::print_frame_indicator(asset.get_frame_idx(), asset.get_frame_num());
-            asset.print();
+            let odd_sec: bool = (start_time.elapsed().unwrap().as_secs() % 2) == 1;
+            asset.print(odd_sec);
             decorations::print_color_guide();
             // else print save mode screen
             if mode == mode::EditorMode::Glyph {
@@ -66,20 +68,22 @@ fn main() {
                 pad::print_line("\rmode:color");
             }
             pad::to_end();
-            let cmd = command::handle_blocking_input(&mode);
-            if cmd.quit {
-                break;
-            } else if cmd.cycle_mode {
-                if mode == mode::EditorMode::Glyph {
-                    mode = mode::EditorMode::Color;
-                } else if mode == mode::EditorMode::Color {
-                    mode = mode::EditorMode::Glyph;
-                }
-            } else if cmd.save_mode {
-                mode = mode::EditorMode::Save;
-            } else {
-                asset.handle_command(&cmd);
-            } // else if save mode
+
+            if let Some(cmd) = command::handle_blocking_input(&mode) {
+                if cmd.quit {
+                    break;
+                } else if cmd.cycle_mode {
+                    if mode == mode::EditorMode::Glyph {
+                        mode = mode::EditorMode::Color;
+                    } else if mode == mode::EditorMode::Color {
+                        mode = mode::EditorMode::Glyph;
+                    }
+                } else if cmd.save_mode {
+                    mode = mode::EditorMode::Save;
+                } else {
+                    asset.handle_command(&cmd);
+                } // else if save mode
+            }
         }
     }
     // return terminal to regular state

@@ -32,26 +32,26 @@ pub struct Command {
     // play animation isize number times
 }
 
-pub fn handle_blocking_input(mode: &EditorMode) -> Command {
+pub fn handle_blocking_input(mode: &EditorMode) -> Option<Command> {
     let mut command = EMPTY_COMMAND;
-    let press = input::blocking_get_press();
+    if let Some(press) = input::get_press() {
+        command.quit = exit(&press);
+        command.cycle_mode = cycle_mode(&press);
+        command.save_mode = save_mode(&press);
+        command.move_cursor = move_cursor(&press);
+        command.resize = resize(&press);
+        command.add_frame = add_frame(&press);
+        command.delete_frame = delete_frame(&press);
+        command.cycle_frame = cycle_frame(&press);
 
-    command.quit = exit(&press);
-    command.cycle_mode = cycle_mode(&press);
-    command.save_mode = save_mode(&press);
-    command.move_cursor = move_cursor(&press);
-    command.resize = resize(&press);
-    command.add_frame = add_frame(&press);
-    command.delete_frame = delete_frame(&press);
-    command.cycle_frame = cycle_frame(&press);
-
-    if *mode == EditorMode::Glyph {
-        command.set_char = set_glyph(&press);
-    } else if *mode == EditorMode::Color {
-        command.set_color = set_color(&press);
+        if *mode == EditorMode::Glyph {
+            command.set_char = set_glyph(&press);
+        } else if *mode == EditorMode::Color {
+            command.set_color = set_color(&press);
+        }
+        return Some(command);
     }
-
-    return command;
+    return None;
 }
 
 fn exit(press: &input::Press) -> bool {
