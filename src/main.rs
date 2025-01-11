@@ -69,20 +69,21 @@ fn main() {
             }
             pad::to_end();
 
-            if let Some(cmd) = command::handle_blocking_input(&mode) {
-                if cmd.quit {
-                    break;
-                } else if cmd.cycle_mode {
-                    if mode == mode::EditorMode::Glyph {
-                        mode = mode::EditorMode::Color;
-                    } else if mode == mode::EditorMode::Color {
-                        mode = mode::EditorMode::Glyph;
+            if let Some(cmd) = command::handle_input(&mode) {
+                match cmd {
+                    command::Command::Quit => break,
+                    command::Command::CycleMode => {
+                        if mode == mode::EditorMode::Glyph {
+                            mode = mode::EditorMode::Color;
+                        } else if mode == mode::EditorMode::Color {
+                            mode = mode::EditorMode::Glyph;
+                        }
                     }
-                } else if cmd.save_mode {
-                    mode = mode::EditorMode::Save;
-                } else {
-                    asset.handle_command(&cmd);
-                } // else if save mode
+                    command::Command::SaveMode => {
+                        mode = mode::EditorMode::Save;
+                    }
+                    _ => asset.handle_command(&cmd),
+                }
             }
         }
     }

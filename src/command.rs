@@ -4,52 +4,49 @@ use terminal;
 
 use mode::EditorMode;
 
-pub const EMPTY_COMMAND: Command = Command {
-    quit: false,
-    move_cursor: None,
-    resize: None,
-    cycle_frame: None,
-    set_char: None,
-    set_color: None,
-    add_frame: false,
-    delete_frame: false,
-    cycle_mode: false,
-    save_mode: false,
-};
-
-// TODO this seems like it should be an enum
-pub struct Command {
-    pub quit: bool,
-    pub move_cursor: Option<input::Direction>,
-    pub resize: Option<(input::Direction, isize)>,
-    pub cycle_frame: Option<isize>,
-    pub set_char: Option<char>,
-    pub set_color: Option<terminal::Color>,
-    pub add_frame: bool,
-    pub delete_frame: bool,
-    pub cycle_mode: bool,
-    pub save_mode: bool,
+pub enum Command {
+    Quit,
+    MoveCursor(input::Direction),
+    Resize(input::Direction, isize),
+    SetChar(char),
+    SetColor(terminal::Color),
+    AddFrame,
+    DeleteFrame,
+    CycleFrame(isize),
+    CycleMode,
+    SaveMode,
     // play animation isize number times
 }
 
-pub fn handle_blocking_input(mode: &EditorMode) -> Option<Command> {
-    let mut command = EMPTY_COMMAND;
+pub fn handle_input(mode: &EditorMode) -> Option<Command> {
     if let Some(press) = input::get_press() {
-        command.quit = exit(&press);
-        command.cycle_mode = cycle_mode(&press);
-        command.save_mode = save_mode(&press);
-        command.move_cursor = move_cursor(&press);
-        command.resize = resize(&press);
-        command.add_frame = add_frame(&press);
-        command.delete_frame = delete_frame(&press);
-        command.cycle_frame = cycle_frame(&press);
+        if exit(&press) {
+            return Some(Command::Quit);
+        } else if cycle_mode(&press) {
+            return Some(Command::CycleMode);
+        } else if save_mode(&press) {
+            return Some(Command::SaveMode);
+        } else if let Some(direction) = move_cursor(&press) {
+            return Some(Command::MoveCursor(direction));
+        } else if let Some((direction, magnitude)) = resize(&press) {
+            return Some(Command::Resize(direction, magnitude));
+        } else if add_frame(&press) {
+            return Some(Command::AddFrame);
+        } else if delete_frame(&press) {
+            return Some(Command::DeleteFrame);
+        } else if let Some(num) = cycle_frame(&press) {
+            return Some(Command::CycleFrame(num));
+        }
 
         if *mode == EditorMode::Glyph {
-            command.set_char = set_glyph(&press);
+            if let Some(character) = set_glyph(&press) {
+                return Some(Command::SetChar(character));
+            }
         } else if *mode == EditorMode::Color {
-            command.set_color = set_color(&press);
+            if let Some(color) = set_color(&press) {
+                return Some(Command::SetColor(color));
+            }
         }
-        return Some(command);
     }
     return None;
 }

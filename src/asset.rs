@@ -97,20 +97,29 @@ impl Asset {
     }
 
     pub fn handle_command(&mut self, cmd: &command::Command) {
-        if let Some(mv) = cmd.move_cursor {
-            self.move_cursor(&mv);
-        } else if let Some(rz) = cmd.resize {
-            self.resize(&rz.0, rz.1);
-        } else if let Some(glyph) = cmd.set_char {
-            self.set_char(glyph);
-        } else if let Some(color) = cmd.set_color {
-            self.set_color(&color);
-        } else if cmd.add_frame {
-            self.add_frame();
-        } else if cmd.delete_frame {
-            self.delete_frame();
-        } else if let Some(delta) = cmd.cycle_frame {
-            self.cycle_frame(delta);
+        match cmd {
+            command::Command::MoveCursor(direction) => {
+                self.move_cursor(direction);
+            }
+            command::Command::Resize(direction, magnitude) => {
+                self.resize(direction, *magnitude);
+            }
+            command::Command::SetChar(character) => {
+                self.set_char(*character);
+            }
+            command::Command::SetColor(color) => {
+                self.set_color(&color);
+            }
+            command::Command::AddFrame => {
+                self.add_frame();
+            }
+            command::Command::DeleteFrame => {
+                self.delete_frame();
+            }
+            command::Command::CycleFrame(magnitude) => {
+                self.cycle_frame(*magnitude);
+            }
+            _ => {}
         }
     }
 
@@ -225,13 +234,13 @@ impl Asset {
         }
     }
 
-    pub fn set_char(&mut self, glyph: char) {
+    pub fn set_char(&mut self, character: char) {
         let frame_idx = self.current_frame;
         let line_idx = self.cursor_position.y;
-        let glyph_idx = self.cursor_position.x;
-        let mut color_glyph = self.animation[frame_idx][line_idx][glyph_idx];
-        color_glyph.glyph = glyph;
-        self.animation[frame_idx][line_idx][glyph_idx] = color_glyph;
+        let character_idx = self.cursor_position.x;
+        let mut color_glyph = self.animation[frame_idx][line_idx][character_idx];
+        color_glyph.glyph = character;
+        self.animation[frame_idx][line_idx][character_idx] = color_glyph;
     }
 
     pub fn set_color(&mut self, color: &terminal::Color) {
