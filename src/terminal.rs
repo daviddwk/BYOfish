@@ -1,5 +1,6 @@
 extern crate crossterm;
 use self::crossterm::ExecutableCommand;
+use animation::Position;
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Color {
@@ -46,6 +47,15 @@ pub fn reset() {
 pub fn home_cursor() {
     std::io::stdout()
         .execute(crossterm::cursor::MoveTo(0, 0))
+        .unwrap();
+}
+
+pub fn move_cursor(position: Position) {
+    std::io::stdout()
+        .execute(crossterm::cursor::MoveTo(
+            position.x as u16,
+            position.y as u16,
+        ))
         .unwrap();
 }
 

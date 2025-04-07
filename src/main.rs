@@ -41,7 +41,7 @@ fn main() {
 
     let mut asset = asset::Asset::new(&asset_path, &file_name);
     // TODO:look at exsisting file and make the type based on that or default to fish
-    let mut save_menu = menu::SaveMenu::new(menu::AssetType::Fish(menu::FishSettings {}));
+    let mut save_menu = menu::SaveMenu::new(menu::AssetType::Fish);
 
     let mut mode = mode::EditorMode::Glyph;
     terminal::init();
@@ -58,8 +58,8 @@ fn main() {
             }
         } else {
             decorations::print_frame_indicator(asset.get_frame_idx(), asset.get_frame_num());
-            let odd_sec: bool = (start_time.elapsed().unwrap().as_secs() % 2) == 1;
-            asset.print(odd_sec);
+            let show_cursor: bool = (start_time.elapsed().unwrap().as_millis() % 1000) < 500;
+            asset.print(show_cursor);
             decorations::print_color_guide();
             // else print save mode screen
             if mode == mode::EditorMode::Glyph {

@@ -5,7 +5,6 @@ use command;
 use input::Direction;
 use open_json::open_json;
 use serde_json::json;
-use std::io::stdout;
 use std::path::PathBuf;
 use terminal;
 
@@ -74,7 +73,7 @@ impl Asset {
                 // TODO make cursor flashing
                 if pos == self.cursor_position && show_cursor {
                     ColorGlyph {
-                        glyph: 'X',
+                        glyph: '•',
                         foreground_color: None,
                         background_color: None,
                     }
@@ -93,6 +92,21 @@ impl Asset {
             if line_idx == self.get_size().height - 1 {
                 print!("┗{}┛ \r\n", "━".repeat(self.get_size().width));
             }
+        }
+    }
+
+    pub fn print_cursor(&self, show_cursor: bool) {
+        terminal::move_cursor(self.cursor_position);
+        if show_cursor {
+            ColorGlyph {
+                glyph: 'X',
+                foreground_color: None,
+                background_color: None,
+            }
+            .print();
+        } else {
+            self.animation[self.current_frame][self.cursor_position.y][self.cursor_position.x]
+                .print();
         }
     }
 
@@ -268,7 +282,7 @@ impl Asset {
     pub fn delete_frame(&mut self) {
         if !(self.animation.len() <= 1) {
             self.animation.remove(self.current_frame);
-            self.current_frame = self.current_frame % self.get_size().height;
+            self.current_frame = self.current_frame % self.animation.len();
         }
     }
 

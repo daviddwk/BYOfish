@@ -52,3 +52,4 @@ pub fn color_to_char(color: &Option<terminal::Color>) -> char {
         _ => ' ',
     }
 }
+
