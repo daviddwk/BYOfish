@@ -51,9 +51,16 @@ fn main() {
         terminal::home_cursor();
         // if not save mode
         if mode == mode::EditorMode::Save {
+            let mut save = false;
             save_menu.print();
             pad::to_end();
-            if !save_menu.handle_input() {
+            if !save_menu.handle_input(&mut save) {
+                asset.export();
+                if save {
+                    terminal::reset();
+                    println!("{}", asset.export());
+                    std::process::exit(0);
+                }
                 mode = mode::EditorMode::Glyph;
             }
         } else {

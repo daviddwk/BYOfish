@@ -49,9 +49,13 @@ impl SaveMenu {
         print_settings(self.cursor_idx, &duck_menu_text);
     }
 
-    pub fn handle_input(&mut self) -> bool {
+    pub fn handle_input(&mut self, save: &mut bool) -> bool {
+        *save = false;
         if let Some(press) = input::get_press() {
             if press.key == input::Key::Esc {
+                return false;
+            } else if press.key == input::Key::Enter {
+                *save = true;
                 return false;
             } else if press.key == input::Key::Direction(input::Direction::Up) {
                 if self.cursor_idx > 0 {
