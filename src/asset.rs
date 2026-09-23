@@ -286,7 +286,7 @@ impl Asset {
         }
     }
 
-    pub fn export(&mut self) -> String {
+    pub fn export(&self) -> String {
         let size = self.get_size();
         let num_frames = self.get_frame_num();
 

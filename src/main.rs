@@ -41,7 +41,6 @@ fn main() {
 
     let mut asset = asset::Asset::new(&asset_path, &file_name);
     // TODO:look at exsisting file and make the type based on that or default to fish
-    let mut save_menu = menu::SaveMenu::new(menu::AssetType::Fish);
 
     let mut mode = mode::EditorMode::Glyph;
     terminal::init();
@@ -51,17 +50,15 @@ fn main() {
         terminal::home_cursor();
         // if not save mode
         if mode == mode::EditorMode::Save {
-            let mut save = false;
-            save_menu.print();
-            pad::to_end();
-            if !save_menu.handle_input(&mut save) {
-                asset.export();
-                if save {
-                    terminal::reset();
-                    println!("{}", asset.export());
-                    std::process::exit(0);
+            let mut save_menu = menu::SaveMenu::new(menu::AssetType::Fish, &asset);
+            loop {
+                terminal::home_cursor();
+                save_menu.print();
+                pad::to_end();
+                if !save_menu.handle_input() {
+                    mode = mode::EditorMode::Glyph;
+                    break;
                 }
-                mode = mode::EditorMode::Glyph;
             }
         } else {
             decorations::print_frame_indicator(asset.get_frame_idx(), asset.get_frame_num());
