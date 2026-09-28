@@ -39,8 +39,9 @@ fn main() {
         file_name = dir.to_os_string().into_string().unwrap();
     }
 
-    let mut asset = asset::Asset::new(&asset_path, &file_name);
     // TODO:look at exsisting file and make the type based on that or default to fish
+    let mut save_menu = menu::SaveMenu::new(menu::AssetType::Fish);
+    let mut asset = asset::Asset::new(&asset_path, &file_name);
 
     let mut mode = mode::EditorMode::Glyph;
     terminal::init();
@@ -50,12 +51,11 @@ fn main() {
         terminal::home_cursor();
         // if not save mode
         if mode == mode::EditorMode::Save {
-            let mut save_menu = menu::SaveMenu::new(menu::AssetType::Fish, &asset);
             loop {
                 terminal::home_cursor();
                 save_menu.print();
                 pad::to_end();
-                if !save_menu.handle_input() {
+                if !save_menu.handle_input(&asset) {
                     mode = mode::EditorMode::Glyph;
                     break;
                 }

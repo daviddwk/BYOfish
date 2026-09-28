@@ -15,8 +15,7 @@ pub struct DuckSettings {
 }
 pub struct CrabSettings {}
 
-pub struct SaveMenu<'a> {
-    asset: &'a asset::Asset,
+pub struct SaveMenu {
     sort: AssetType,
     cursor_idx: usize,
     fish_settings: FishSettings,
@@ -24,10 +23,9 @@ pub struct SaveMenu<'a> {
     crab_settings: CrabSettings,
 }
 
-impl<'a> SaveMenu<'a> {
-    pub fn new(sort: AssetType, asset: &'a asset::Asset) -> SaveMenu {
+impl SaveMenu {
+    pub fn new(sort: AssetType) -> SaveMenu {
         return SaveMenu {
-            asset,
             sort,
             cursor_idx: 0,
             fish_settings: FishSettings {},
@@ -52,12 +50,12 @@ impl<'a> SaveMenu<'a> {
         print_settings(self.cursor_idx, &duck_menu_text);
     }
 
-    pub fn handle_input(&mut self) -> bool {
+    pub fn handle_input(&mut self, asset: &asset::Asset) -> bool {
         if let Some(press) = input::get_press() {
             if press.key == input::Key::Esc {
                 return false;
             } else if press.key == input::Key::Enter {
-                println!("{}", self.asset.export());
+                println!("{}", asset.export());
                 return false;
             } else if press.key == input::Key::Direction(input::Direction::Up) {
                 if self.cursor_idx > 0 {
