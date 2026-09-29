@@ -286,7 +286,7 @@ impl Asset {
         }
     }
 
-    pub fn export(&self) -> String {
+    pub fn export(&self) -> serde_json::Value {
         let size = self.get_size();
         let num_frames = self.get_frame_num();
 
@@ -334,7 +334,7 @@ impl Asset {
             }
         }
 
-        return serde_json::to_string_pretty(&json!({
+        return json!({
             "forward_animation": {
                 "symbols": forward_animation_symbols,
                 "colors": forward_animation_colors,
@@ -345,7 +345,6 @@ impl Asset {
                 "colors": flipped_animation_colors,
                 "highlights": flipped_animation_highlights,
             },
-        }))
-        .unwrap();
+        });
     }
 }

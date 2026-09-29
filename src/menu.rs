@@ -57,7 +57,21 @@ impl SaveMenu {
             if press.key == input::Key::Esc {
                 return Ok(false);
             } else if press.key == input::Key::Enter {
-                std::fs::write(self.asset_path.clone(), asset.export())?;
+                let mut asset_json: serde_json::Value = asset.export();
+                match self.sort {
+                    AssetType::Fish => {}
+                    AssetType::Duck => {
+                        asset_json.as_object_mut().unwrap().insert(
+                            "buoyancy".to_string(),
+                            serde_json::json!(self.duck_settings.buoyancy),
+                        );
+                    }
+                    AssetType::Crab => {}
+                }
+                std::fs::write(
+                    self.asset_path.clone(),
+                    serde_json::to_string_pretty(&asset_json)?,
+                )?;
                 return Ok(false);
             } else if press.key == input::Key::Direction(input::Direction::Up) {
                 if self.cursor_idx > 0 {
