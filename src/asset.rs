@@ -33,6 +33,7 @@ impl Asset {
         // hardcode to look for forward/flipped_animation as well as
         //   foreground / background animation
         let anim_json = open_json(path, name, "fish");
+        // TODO add the same checks for animations as freefish
         let forward_animation: Animation =
             load_animation(&anim_json, "test fish", "/forward_animation");
         let flipped_animation: Animation =
@@ -319,8 +320,13 @@ impl Asset {
     pub fn add_frame(&mut self) {
         self.forward_animation.insert(
             self.current_frame,
-            blank_animation(self.get_size())[0].clone(),
+            self.forward_animation[self.current_frame].clone(),
         );
+        self.flipped_animation.insert(
+            self.current_frame,
+            self.flipped_animation[self.current_frame].clone(),
+        );
+        self.current_frame += 1;
     }
 
     pub fn delete_frame(&mut self) {
@@ -335,10 +341,12 @@ impl Asset {
             Flip::FORWARD => self.flip = Flip::FLIPPED,
             Flip::FLIPPED => self.flip = Flip::FORWARD,
         }
+        /* if I support variable # of frames between flips
         let frame_num = self.get_frame_num(None);
         if self.current_frame >= frame_num {
             self.current_frame = frame_num - 1;
         }
+        */
     }
 
     pub fn export(&self) -> serde_json::Value {
