@@ -33,11 +33,8 @@ fn main() -> std::io::Result<()> {
     let args = Opt::from_args();
     let asset_path = std::path::PathBuf::from(args.file_name);
 
-    let mut file_name = String::new();
-    if let Some(dir) = asset_path.file_name() {
-        // idk what I'm doing here, so there's probably a safer way
-        file_name = dir.to_os_string().into_string().unwrap();
-    }
+    let dir = asset_path.file_name().unwrap();
+    let file_name = dir.to_os_string().into_string().unwrap();
 
     // TODO:look at exsisting file and make the type based on that or default to fish
     let mut save_menu = menu::SaveMenu::new(menu::AssetType::Fish, asset_path.clone());
