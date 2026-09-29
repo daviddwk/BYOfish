@@ -58,7 +58,7 @@ fn main() -> std::io::Result<()> {
                 }
             }
         } else {
-            decorations::print_frame_indicator(asset.get_frame_idx(), asset.get_frame_num());
+            decorations::print_frame_indicator(asset.get_frame_idx(), asset.get_frame_num(None));
             let show_cursor: bool = (start_time.elapsed().unwrap().as_millis() % 1000) < 500;
             asset.print(show_cursor);
             decorations::print_color_guide();
@@ -74,11 +74,14 @@ fn main() -> std::io::Result<()> {
                 match cmd {
                     command::Command::Quit => break,
                     command::Command::CycleMode => {
+                        asset.flip();
+                        /*
                         if mode == mode::EditorMode::Glyph {
                             mode = mode::EditorMode::Color;
                         } else if mode == mode::EditorMode::Color {
                             mode = mode::EditorMode::Glyph;
                         }
+                        */
                     }
                     command::Command::SaveMode => {
                         mode = mode::EditorMode::Save;
