@@ -29,7 +29,7 @@ struct Opt {
     file_name: String,
 }
 
-fn main() {
+fn main() -> std::io::Result<()> {
     let args = Opt::from_args();
     let asset_path = std::path::PathBuf::from(args.file_name);
 
@@ -40,7 +40,7 @@ fn main() {
     }
 
     // TODO:look at exsisting file and make the type based on that or default to fish
-    let mut save_menu = menu::SaveMenu::new(menu::AssetType::Fish);
+    let mut save_menu = menu::SaveMenu::new(menu::AssetType::Fish, asset_path.clone());
     let mut asset = asset::Asset::new(&asset_path, &file_name);
 
     let mut mode = mode::EditorMode::Glyph;
@@ -55,7 +55,7 @@ fn main() {
                 terminal::home_cursor();
                 save_menu.print();
                 pad::to_end();
-                if !save_menu.handle_input(&asset) {
+                if !save_menu.handle_input(&asset)? {
                     mode = mode::EditorMode::Glyph;
                     break;
                 }

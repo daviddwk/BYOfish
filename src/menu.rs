@@ -16,6 +16,7 @@ pub struct DuckSettings {
 pub struct CrabSettings {}
 
 pub struct SaveMenu {
+    asset_path: std::path::PathBuf,
     sort: AssetType,
     cursor_idx: usize,
     fish_settings: FishSettings,
@@ -24,8 +25,9 @@ pub struct SaveMenu {
 }
 
 impl SaveMenu {
-    pub fn new(sort: AssetType) -> SaveMenu {
+    pub fn new(sort: AssetType, asset_path: std::path::PathBuf) -> SaveMenu {
         return SaveMenu {
+            asset_path,
             sort,
             cursor_idx: 0,
             fish_settings: FishSettings {},
@@ -50,13 +52,13 @@ impl SaveMenu {
         print_settings(self.cursor_idx, &duck_menu_text);
     }
 
-    pub fn handle_input(&mut self, asset: &asset::Asset) -> bool {
+    pub fn handle_input(&mut self, asset: &asset::Asset) -> std::io::Result<bool> {
         if let Some(press) = input::get_press() {
             if press.key == input::Key::Esc {
-                return false;
+                return Ok(false);
             } else if press.key == input::Key::Enter {
-                println!("{}", asset.export());
-                return false;
+                std::fs::write(self.asset_path.clone(), asset.export())?;
+                return Ok(false);
             } else if press.key == input::Key::Direction(input::Direction::Up) {
                 if self.cursor_idx > 0 {
                     self.cursor_idx -= 1;
@@ -88,7 +90,7 @@ impl SaveMenu {
                 AssetType::Crab => {}
             }
         }
-        return true;
+        return Ok(true);
     }
 
     fn cycle_asset_type(&mut self, delta: isize) {
